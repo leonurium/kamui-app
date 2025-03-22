@@ -1,0 +1,43 @@
+// lib/injection.dart
+import 'package:get_it/get_it.dart';
+
+import 'core/network/api_client.dart';
+import 'data/repositories/auth_repository_impl.dart';
+import 'data/repositories/vpn_repository_impl.dart';
+import 'data/repositories/premium_repository_impl.dart';
+import 'data/repositories/ads_repository_impl.dart';
+import 'domain/repositories/auth_repository.dart';
+import 'domain/repositories/vpn_repository.dart';
+import 'domain/repositories/premium_repository.dart';
+import 'domain/repositories/ads_repository.dart';
+import 'domain/usecases/register_device_usecase.dart';
+import 'domain/usecases/get_servers_usecase.dart';
+import 'domain/usecases/connect_vpn_usecase.dart';
+import 'domain/usecases/disconnect_vpn_usecase.dart';
+import 'domain/usecases/get_packages_usecase.dart';
+import 'domain/usecases/purchase_package_usecase.dart';
+import 'domain/usecases/get_payment_histories_usecase.dart';
+import 'domain/usecases/get_ads_usecase.dart';
+
+final GetIt sl = GetIt.instance;
+
+Future<void> init() async {
+  // Core
+  sl.registerLazySingleton<ApiClient>(() => ApiClient());
+
+  // Repositories
+  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
+  sl.registerLazySingleton<VpnRepository>(() => VpnRepositoryImpl(sl()));
+  sl.registerLazySingleton<PremiumRepository>(() => PremiumRepositoryImpl(sl()));
+  sl.registerLazySingleton<AdsRepository>(() => AdsRepositoryImpl(sl()));
+
+  // Use cases
+  sl.registerLazySingleton<RegisterDeviceUseCase>(() => RegisterDeviceUseCase(sl()));
+  sl.registerLazySingleton<GetServersUseCase>(() => GetServersUseCase(sl()));
+  sl.registerLazySingleton<ConnectVpnUseCase>(() => ConnectVpnUseCase(sl()));
+  sl.registerLazySingleton<DisconnectVpnUseCase>(() => DisconnectVpnUseCase(sl()));
+  sl.registerLazySingleton<GetPackagesUseCase>(() => GetPackagesUseCase(sl()));
+  sl.registerLazySingleton<PurchasePackageUseCase>(() => PurchasePackageUseCase(sl()));
+  sl.registerLazySingleton<GetPaymentHistoriesUseCase>(() => GetPaymentHistoriesUseCase(sl()));
+  sl.registerLazySingleton<GetAdsUseCase>(() => GetAdsUseCase(sl()));
+}

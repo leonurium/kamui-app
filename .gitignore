@@ -1,6 +1,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/macos,xcode,xcodeinjection,flutter,androidstudio,windows,intellij,visualstudiocode,cocoapods,swift,swiftpackagemanager,gradle,kotlin,firebase
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,xcode,xcodeinjection,flutter,androidstudio,windows,intellij,visualstudiocode,cocoapods,swift,swiftpackagemanager,gradle,kotlin,firebase
 
+### Custom ###
+.env
+
 ### CocoaPods ###
 ## CocoaPods GitIgnore Template
 
