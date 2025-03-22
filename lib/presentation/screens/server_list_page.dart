@@ -8,7 +8,7 @@ class ServerListPage extends StatefulWidget {
 }
 
 class _ServerListPageState extends State<ServerListPage> {
-  Server server = Server(
+  ServerVPN server = ServerVPN(
       name: 'Ghana',
       flag: 'assets/ghana.png',
       domain: 'PL226.vpnbook.com',
@@ -16,8 +16,8 @@ class _ServerListPageState extends State<ServerListPage> {
       password: '3ev7r8m',
       port: 443,
       mtu: 1234);
-  final premiumServers = <Server>[
-    Server(
+  final premiumServers = <ServerVPN>[
+    ServerVPN(
         name: 'England',
         flag: 'assets/england.png',
         domain: 'vpn.example.com',
@@ -25,7 +25,7 @@ class _ServerListPageState extends State<ServerListPage> {
         password: 'admin',
         port: 1234,
         mtu: 1234),
-    Server(
+    ServerVPN(
         name: 'United States',
         flag: 'assets/usa.jpg',
         domain: 'vpn.example.com',
@@ -33,7 +33,7 @@ class _ServerListPageState extends State<ServerListPage> {
         password: 'admin',
         port: 1234,
         mtu: 1234),
-    Server(
+    ServerVPN(
         name: 'Canada',
         flag: 'assets/canada.png',
         domain: 'vpn.example.com',
@@ -41,7 +41,7 @@ class _ServerListPageState extends State<ServerListPage> {
         password: 'admin',
         port: 1234,
         mtu: 1234),
-    Server(
+    ServerVPN(
         name: 'France',
         flag: 'assets/france.png',
         domain: 'vpn.example.com',
@@ -49,7 +49,7 @@ class _ServerListPageState extends State<ServerListPage> {
         password: 'admin',
         port: 1234,
         mtu: 1234),
-    Server(
+    ServerVPN(
         name: 'Ghana',
         flag: 'assets/ghana.png',
         domain: 'vpn.example.com',
@@ -59,8 +59,8 @@ class _ServerListPageState extends State<ServerListPage> {
         mtu: 1234),
   ];
 
-  List<Server> freeServers = [
-    Server(
+  List<ServerVPN> freeServers = [
+    ServerVPN(
         name: 'England',
         flag: 'assets/england.png',
         domain: 'vpn.example.com',
@@ -68,7 +68,7 @@ class _ServerListPageState extends State<ServerListPage> {
         password: 'admin',
         port: 1234,
         mtu: 1234),
-    Server(
+    ServerVPN(
         name: 'France',
         flag: 'assets/france.png',
         domain: 'vpn.example.com',
@@ -76,7 +76,7 @@ class _ServerListPageState extends State<ServerListPage> {
         password: 'admin',
         port: 1234,
         mtu: 1234),
-    Server(
+    ServerVPN(
         name: 'Ghana',
         flag: 'assets/ghana.png',
         domain: 'vpn.example.com',
@@ -221,7 +221,7 @@ class _ServerListPageState extends State<ServerListPage> {
   }
 }
 
-class Server {
+class ServerVPN {
   String? flag;
   String? name;
   String? domain;
@@ -230,5 +230,5 @@ class Server {
   int? port;
   int? mtu;
 
-  Server({this.flag, this.name, this.domain, this.username, this.password, this.port, this.mtu});
+  ServerVPN({this.flag, this.name, this.domain, this.username, this.password, this.port, this.mtu});
 }

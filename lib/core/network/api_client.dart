@@ -31,15 +31,15 @@ class ApiClient {
           options.headers['X-API-KEY'] = Constants.apiKey;
           options.headers['Content-Type'] = 'application/json';
           
-          Logger.debug('REQUEST[${options.method}] => PATH: ${options.path}');
+          Logger.debug("[REQUEST] ${options.uri}");
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          Logger.debug('RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
+          Logger.debug('[RESPONSE] [${response.statusCode}] ${response.data.toString()}');
           return handler.next(response);
         },
         onError: (DioException e, handler) {
-          Logger.error('ERROR[${e.response?.statusCode}] => PATH: ${e.requestOptions.path} "${e.message}"');
+          Logger.error('${e.message}');
           return handler.next(e);
         },
       ),

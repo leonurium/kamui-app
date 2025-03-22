@@ -30,7 +30,7 @@ dependencies:
   google_fonts: ^4.0.3
   avatar_glow: ^2.0.2
   circularbox: ^1.1.1+1
-  flutter_vpn: ^0.12.0
+  flutter_vpn: ^0.13.0
   roundcheckbox: ^2.0.5
   crypto: ^3.0.6
   device_info_plus: ^11.3.0
@@ -39,6 +39,8 @@ dependencies:
   get_it: ^8.0.3
   bloc: ^9.0.0
   equatable: ^2.0.7
+  flutter_bloc: ^9.1.0
+  shared_preferences: ^2.5.2
 
 dev_dependencies:
   flutter_test:

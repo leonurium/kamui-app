@@ -1,8 +1,12 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kamui_app/presentation/blocs/splash/splash_bloc.dart';
+import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
 import 'package:kamui_app/presentation/screens/home_page.dart';
 import 'package:kamui_app/core/utils/custom_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'injection.dart' as di;
+import 'presentation/screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +24,17 @@ class App extends StatelessWidget {
       theme: customLightTheme(context),
       darkTheme: customDarkTheme(context),
       themeMode: ThemeMode.system,
-      home: HomePage(),
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) => di.sl<SplashBloc>(),
+          ),
+          BlocProvider(
+            create: (context) => di.sl<VpnBloc>(),
+          ),
+        ],
+        child: SplashScreen(),
+      ),
     );
   }
 }

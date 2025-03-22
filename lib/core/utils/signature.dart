@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'device_info.dart';
-import 'logger.dart';
 import '../config/constants.dart';
 
 class Signature {

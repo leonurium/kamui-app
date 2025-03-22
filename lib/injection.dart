@@ -1,5 +1,8 @@
 // lib/injection.dart
 import 'package:get_it/get_it.dart';
+import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
+import 'package:kamui_app/presentation/blocs/splash/splash_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/network/api_client.dart';
 import 'data/repositories/auth_repository_impl.dart';
@@ -24,6 +27,8 @@ final GetIt sl = GetIt.instance;
 Future<void> init() async {
   // Core
   sl.registerLazySingleton<ApiClient>(() => ApiClient());
+  final sharedPreferences = await SharedPreferences.getInstance();
+  sl.registerLazySingleton(() => sharedPreferences);
 
   // Repositories
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
@@ -40,4 +45,17 @@ Future<void> init() async {
   sl.registerLazySingleton<PurchasePackageUseCase>(() => PurchasePackageUseCase(sl()));
   sl.registerLazySingleton<GetPaymentHistoriesUseCase>(() => GetPaymentHistoriesUseCase(sl()));
   sl.registerLazySingleton<GetAdsUseCase>(() => GetAdsUseCase(sl()));
+
+  // blocs
+  sl.registerLazySingleton<VpnBloc>(() => VpnBloc(
+    sl<GetServersUseCase>(),
+    sl<ConnectVpnUseCase>(),
+    sl<DisconnectVpnUseCase>(),
+  ));
+  
+  sl.registerLazySingleton<SplashBloc>(() => SplashBloc(
+    getServersUseCase: sl<GetServersUseCase>(),
+    getAdsUseCase: sl<GetAdsUseCase>(),
+    registerDeviceUseCase: sl<RegisterDeviceUseCase>(),
+  ));
 }
