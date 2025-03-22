@@ -1,5 +1,5 @@
-import 'package:etornam_vpn/screens/home_page.dart';
-import 'package:etornam_vpn/utils/custom_theme.dart';
+import 'package:kamui_app/presentation/screens/home_page.dart';
+import 'package:kamui_app/core/utils/custom_theme.dart';
 import 'package:flutter/material.dart';
 
 void main() {

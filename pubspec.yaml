@@ -1,4 +1,4 @@
-name: etornam_vpn
+name: kamui_app
 description: A simple VPN application built with flutter
 
 # The following line prevents the package from being accidentally published to
@@ -32,6 +32,8 @@ dependencies:
   circularbox: ^1.1.1+1
   flutter_vpn: ^0.12.0
   roundcheckbox: ^2.0.5
+  crypto: ^3.0.6
+  device_info_plus: ^11.3.0
 
 dev_dependencies:
   flutter_test:

@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:avatar_glow/avatar_glow.dart';
-import 'package:etornam_vpn/screens/server_list_page.dart';
+import 'package:kamui_app/core/utils/signature.dart';
+import 'package:kamui_app/core/utils/logger.dart';
+import 'package:kamui_app/presentation/screens/server_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_vpn/flutter_vpn.dart';
 import 'package:flutter_vpn/state.dart';
 
-import 'shared_widgets/server_list_widget.dart';
+import '../widgets/server_list_widget.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -19,11 +21,18 @@ class _HomePageState extends State<HomePage> {
   CharonErrorState charonState = CharonErrorState.NO_ERROR;
   Server? server;
   String connectionTime = '00.00.00';
+  late String signature;
 
   @override
   void initState() {
     super.initState();
     _durationStream = vpnConnectionDuration();
+    _initSignature();
+  }
+
+  Future<void> _initSignature() async {
+    signature = await Signature.generate();
+    Logger.info('Device Signature: $signature');
   }
 
   Stream<String> vpnConnectionDuration() async* {

@@ -1,4 +1,4 @@
-import 'package:etornam_vpn/screens/shared_widgets/server_list_widget.dart';
+import 'package:kamui_app/presentation/widgets/server_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:roundcheckbox/roundcheckbox.dart';
 
