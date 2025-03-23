@@ -7,11 +7,11 @@ class Signature {
   static Future<String> generate() async {
     final deviceId = await DeviceInfoUtil.getDeviceId();
     
-    var key = utf8.encode(Constants.secretKey);
-    var message = utf8.encode("$deviceId|${Constants.secretKey}");
+    final key = utf8.encode(Constants.secretKey);
+    final message = utf8.encode("$deviceId|${Constants.secretKey}");
 
-    var hmacSha256 = Hmac(sha256, key);
-    var digest = hmacSha256.convert(message);
+    final hmacSha256 = Hmac(sha256, key);
+    final digest = hmacSha256.convert(message);
 
     return base64.encode(digest.bytes);
   }

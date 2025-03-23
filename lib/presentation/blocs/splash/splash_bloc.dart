@@ -1,9 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../../../domain/usecases/get_servers_usecase.dart';
-import '../../../domain/usecases/get_ads_usecase.dart';
-import '../../../domain/usecases/register_device_usecase.dart';
-import '../../../core/utils/signature.dart';
+import 'package:kamui_app/core/utils/device_info.dart';
+import 'package:kamui_app/domain/usecases/get_servers_usecase.dart';
+import 'package:kamui_app/domain/usecases/get_ads_usecase.dart';
+import 'package:kamui_app/domain/usecases/register_device_usecase.dart';
+import 'package:kamui_app/core/utils/signature.dart';
 import 'package:kamui_app/core/utils/logger.dart';
 
 part 'splash_event.dart';
@@ -28,19 +29,20 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
   ) async {
     emit(SplashLoading());
     try {
-      // // Generate device signature
-      // final signature = await Signature.generate();
+      // Generate device signature
+      final signature = await Signature.generate();
+      final deviceId = await DeviceInfoUtil.getDeviceId();
       
-      // // Register device if not registered
-      // final isRegistered = await registerDeviceUseCase.execute(
-      //   'device_id', // Get from device
-      //   signature,
-      // );
+      // Register device if not registered
+      final isRegistered = await registerDeviceUseCase.execute(
+        deviceId, // Get from device
+        signature,
+      );
 
-      // if (!isRegistered) {
-      //   emit(SplashError('Failed to register device'));
-      //   return;
-      // }
+      if (!isRegistered) {
+        emit(SplashError('Failed to register device'));
+        return;
+      }
 
       // Get servers and ads
       final servers = await getServersUseCase.execute();

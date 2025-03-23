@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:kamui_app/data/models/main_response.dart';
 import '../utils/signature.dart';
 import '../config/constants.dart';
 import '../utils/device_info.dart';
@@ -30,17 +31,36 @@ class ApiClient {
           options.headers['Signature'] = signature;
           options.headers['X-API-KEY'] = Constants.apiKey;
           options.headers['Content-Type'] = 'application/json';
+
+          Logger.debug("[HEADERS]:");
+          for (var header in options.headers.entries) {
+            Logger.info("${header.key}: ${header.value}");
+          }
           
           Logger.debug("[REQUEST] ${options.uri}");
+          if (options.method == 'POST') {
+            Logger.debug("[BODY] ${options.data}");
+          }
+
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          Logger.debug('[RESPONSE] [${response.statusCode}] ${response.data.toString()}');
+          Logger.warning('[RESPONSE] [${response.statusCode}] ${response.data.toString()}');
           return handler.next(response);
         },
         onError: (DioException e, handler) {
-          Logger.error('${e.message}');
-          return handler.next(e);
+          final errorResponse = e.response;
+          if (errorResponse != null) {
+            final mainResponse = MainResponse<String>.fromJson(
+              errorResponse.data,
+              (json) => json, // Pass identity function for dynamic data
+            );
+            Logger.warning("[RESPONSE] [${errorResponse.statusCode}] ${mainResponse.message ?? mainResponse.error}");
+            handler.resolve(errorResponse);
+          } else {
+            Logger.error('[ERROR] ${e.message}');
+            return handler.next(e);
+          }
         },
       ),
     );
