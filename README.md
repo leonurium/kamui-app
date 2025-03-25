@@ -172,3 +172,16 @@ lib/
 │── injection.dart         # Dependency Injection (GetIt)
 │── routes.dart            # App-wide navigation routes
 │── theme.dart             # Global themes
+
+
+- hilangkan duplikat loading
+- countdown di replace jadi x ketika countdown selesai
+- tambah button untuk UI, tapi semua area bisa di click untuk redirect ke browser
+- button click di ads "lihat selengkapnya / more"
+- ads should be have auto click, settings by cms
+
+ads
+- first load showing ads
+- before connect showing ads
+- after limit time, showing ads
+- want disconnect? showing ads

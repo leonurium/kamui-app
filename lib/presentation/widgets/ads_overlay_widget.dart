@@ -38,7 +38,8 @@ class _AdsOverlayState extends State<AdsOverlay> {
             id: 1,
             title: "Watch Video to Get 1 Hour Free",
             mediaType: "video",
-            mediaUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            // Using a smaller video file
+            mediaUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
             clickUrl: "https://example.com/promo",
             countdown: 30,
           ),
@@ -46,7 +47,8 @@ class _AdsOverlayState extends State<AdsOverlay> {
             id: 2,
             title: "Special VPN Offer - 50% OFF",
             mediaType: "image",
-            mediaUrl: "https://picsum.photos/1080/1920",
+            // Using smaller image dimensions
+            mediaUrl: "https://picsum.photos/400/600",
             clickUrl: "https://example.com/offer",
             countdown: 10,
           ),
@@ -65,15 +67,6 @@ class _AdsOverlayState extends State<AdsOverlay> {
     }
   }
 
-  void _initializeVideo() {
-    _videoController = VideoPlayerController.networkUrl(
-      Uri.parse(currentAd!.mediaUrl)
-    )..initialize().then((_) {
-        setState(() {});
-        _videoController?.play();
-      });
-  }
-
   void _startCountdown() {
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted && countdown > 0) {
@@ -88,15 +81,48 @@ class _AdsOverlayState extends State<AdsOverlay> {
     });
   }
 
-  @override
-  void dispose() {
-    _videoController?.dispose();
-    super.dispose();
+  bool _isVideoLoading = false;
+
+  void _initializeVideo() {
+    final ad = currentAd;
+    if (ad == null) return;
+    
+    setState(() {
+      _isVideoLoading = true;
+    });
+
+    _videoController = VideoPlayerController.networkUrl(
+      Uri.parse(ad.mediaUrl)
+    )..initialize().then((_) {
+        if (mounted) {
+          setState(() {
+            _isVideoLoading = false;
+          });
+          _videoController?.play();
+          _videoController?.setLooping(true);
+        }
+      }).catchError((error) {
+        Logger.error("Failed to load video: $error");
+        if (mounted) {
+          setState(() {
+            _isVideoLoading = false;
+            currentAd = Ad(
+              id: ad.id,
+              title: "Unable to load video",
+              mediaType: "image",
+              mediaUrl: "https://picsum.photos/seed/vpn/1080/1920",
+              clickUrl: ad.clickUrl,
+              countdown: ad.countdown,
+            );
+          });
+        }
+      });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (currentAd == null) return const SizedBox();
+    final ad = currentAd;
+    if (ad == null) return const SizedBox();
 
     return PopScope(
       canPop: false,
@@ -105,12 +131,108 @@ class _AdsOverlayState extends State<AdsOverlay> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (currentAd?.mediaType == 'video' && _videoController?.value.isInitialized == true)
-              VideoPlayer(_videoController!)
-            else if (currentAd?.mediaType == 'image')
-              Image.network(
-                currentAd!.mediaUrl,
-                fit: BoxFit.contain,
+            if (ad.mediaType == 'video')
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  if (_videoController?.value.isInitialized == true)
+                    AspectRatio(
+                      aspectRatio: _videoController?.value.aspectRatio ?? 16/9,
+                      child: VideoPlayer(_videoController!),
+                    ),
+                  if (_isVideoLoading || _videoController?.value.isBuffering == true)
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CircularProgressIndicator(color: Colors.white),
+                        const SizedBox(height: 16),
+                        Text(
+                          _isVideoLoading ? 'Loading video...' : 'Buffering...',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                ],
+              )
+            else if (ad.mediaType == 'image')
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image.network(
+                    ad.mediaUrl,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            color: Colors.white,
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded / 
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Loading image...',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      Logger.error("Failed to load image: $error");
+                      return const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.white, size: 48),
+                          SizedBox(height: 8),
+                          Text(
+                            'Failed to load image',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+              SizedBox(
+                width: double.infinity,
+                height: double.infinity,
+                child: Image.network(
+                  ad.mediaUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded / 
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    Logger.error("Failed to load image: $error");
+                    return const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.white, size: 48),
+                          SizedBox(height: 8),
+                          Text(
+                            'Failed to load image',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
             Positioned(
               top: 40,

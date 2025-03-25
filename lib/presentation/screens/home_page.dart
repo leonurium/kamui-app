@@ -106,7 +106,7 @@ class _HomePageState extends State<HomePage> {
         appBar: AppBar(
           centerTitle: true,
           title: Text(
-            'Leonurium VPN',
+            'Gama VPN',
             style: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w600),
           ),
           leading: Image.asset(

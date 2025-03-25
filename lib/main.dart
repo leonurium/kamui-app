@@ -19,7 +19,7 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Leonurium VPN',
+      title: 'Gama VPN',
       debugShowCheckedModeBanner: false,
       theme: customLightTheme(context),
       darkTheme: customDarkTheme(context),
