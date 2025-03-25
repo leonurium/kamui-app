@@ -5,7 +5,8 @@ import 'package:kamui_app/domain/usecases/get_servers_usecase.dart';
 import 'package:kamui_app/domain/usecases/get_ads_usecase.dart';
 import 'package:kamui_app/domain/usecases/register_device_usecase.dart';
 import 'package:kamui_app/core/utils/signature.dart';
-import 'package:kamui_app/core/utils/logger.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'splash_event.dart';
 part 'splash_state.dart';
@@ -29,35 +30,37 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
   ) async {
     emit(SplashLoading());
     try {
-      // Generate device signature
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Register device
       final signature = await Signature.generate();
       final deviceId = await DeviceInfoUtil.getDeviceId();
+      final registerResponse = await registerDeviceUseCase.execute(deviceId, signature);
       
-      // Register device if not registered
-      final isRegistered = await registerDeviceUseCase.execute(
-        deviceId, // Get from device
-        signature,
-      );
-
-      if (!isRegistered) {
+      final deviceData = registerResponse.data;
+      if (deviceData == null) {
         emit(SplashError('Failed to register device'));
         return;
       }
 
-      // Get servers and ads
+      // Save device data safely
+      await prefs.setString('device_data', jsonEncode(deviceData.toJson()));
+
+      // Get and save servers
       final servers = await getServersUseCase.execute();
+      if (servers.isNotEmpty) {
+        await prefs.setString('servers', jsonEncode(
+          servers.map((server) => server.toJson()).toList()
+        ));
+      }
+
+      // Get and save ads
       final ads = await getAdsUseCase.execute();
-
-      for (var server in servers) {
-        Logger.debug(server.ip);
+      if (ads.isNotEmpty) {
+        await prefs.setString('ads', jsonEncode(
+          ads.map((ad) => ad.toJson()).toList()
+        ));
       }
-
-      for (var ad in ads) {
-        Logger.debug(ad.title);
-      }
-      
-      // Save to local storage
-      // TODO: Implement local storage saving
 
       emit(SplashLoaded());
     } catch (e) {

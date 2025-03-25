@@ -32,20 +32,23 @@ class ApiClient {
           options.headers['X-API-KEY'] = Constants.apiKey;
           options.headers['Content-Type'] = 'application/json';
 
-          Logger.debug("[HEADERS]:");
-          for (var header in options.headers.entries) {
-            Logger.info("${header.key}: ${header.value}");
+          if (Constants.networkLogger) {
+            Logger.debug("[REQUEST] ${options.uri}");
+            Logger.debug("[HEADERS]:");
+            for (var header in options.headers.entries) {
+              Logger.info("${header.key}: ${header.value}");
+            }
+            if (options.method == 'POST') {
+              Logger.debug("[BODY] ${options.data}");
+            }
           }
           
-          Logger.debug("[REQUEST] ${options.uri}");
-          if (options.method == 'POST') {
-            Logger.debug("[BODY] ${options.data}");
-          }
-
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          Logger.warning('[RESPONSE] [${response.statusCode}] ${response.data.toString()}');
+          if(Constants.networkLogger) {
+            Logger.warning('[RESPONSE] [${response.statusCode}] ${response.data.toString()}');
+          }
           return handler.next(response);
         },
         onError: (DioException e, handler) {
@@ -55,10 +58,14 @@ class ApiClient {
               errorResponse.data,
               (json) => json, // Pass identity function for dynamic data
             );
-            Logger.warning("[RESPONSE] [${errorResponse.statusCode}] ${mainResponse.message ?? mainResponse.error}");
+            if(Constants.networkLogger) {
+              Logger.warning("[RESPONSE] [${errorResponse.statusCode}] ${mainResponse.message ?? mainResponse.error}");
+            }
             handler.resolve(errorResponse);
           } else {
-            Logger.error('[ERROR] ${e.message}');
+            if(Constants.networkLogger) {
+              Logger.error('[ERROR] ${e.message}');
+            }
             return handler.next(e);
           }
         },

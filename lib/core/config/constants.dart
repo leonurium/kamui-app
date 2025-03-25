@@ -7,4 +7,5 @@ class Constants {
   static String get secretKey => dotenv.env['SECRET_KEY'] ?? '';
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
   static String get apiKey => dotenv.env['API_KEY'] ?? '';
+  static bool get networkLogger => dotenv.env['NETWORK_LOGGER'] == 'true';
 }

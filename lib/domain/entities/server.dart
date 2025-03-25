@@ -1,31 +1,39 @@
 class Server {
   final int id;
-  final String name;
+  final String apiUrl;
+  final String city;
   final String country;
-  final String ip;
-  final String image;
+  final bool isLocked;
   final bool isPremium;
-  final int ping;
 
   Server({
     required this.id,
-    required this.name,
+    required this.apiUrl,
+    required this.city,
     required this.country,
-    required this.ip,
-    required this.image,
+    required this.isLocked,
     required this.isPremium,
-    required this.ping,
   });
 
   factory Server.fromJson(Map<String, dynamic> json) {
     return Server(
-      id: json['id'],
-      name: json['name'],
-      country: json['country'],
-      ip: json['ip'],
-      image: json['image'],
+      id: json['id'] ?? 0,
+      apiUrl: json['api_url'] ?? '',
+      city: json['city'] ?? '',
+      country: json['country'] ?? '',
+      isLocked: json['is_locked'] ?? false,
       isPremium: json['is_premium'] ?? false,
-      ping: json['ping'] ?? 0,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'api_url': apiUrl,
+      'city': city,
+      'country': country,
+      'is_locked': isLocked,
+      'is_premium': isPremium,
+    };
   }
 }

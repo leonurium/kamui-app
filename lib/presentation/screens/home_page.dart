@@ -12,6 +12,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
 import 'package:kamui_app/domain/entities/server.dart';
 import 'package:kamui_app/domain/entities/session.dart';
+import 'package:kamui_app/presentation/widgets/ads_overlay_widget.dart';
 
 import '../widgets/server_list_widget.dart';
 
@@ -25,6 +26,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  bool _showingAds = true;
   Session? currentSession;
   Server? server;
   String connectionTime = '00.00.00';
@@ -41,10 +43,10 @@ class _HomePageState extends State<HomePage> {
     
     widget.vpnBloc.add(ConnectVpnEvent(server!.id));
     FlutterVpn.connectIkev2EAP(
-      server: server!.ip,
+      server: server!.apiUrl,
       username: 'vpn_username',
       password: 'vpn_password',
-      name: server!.name,
+      name: server!.city,
     );
   }
 
@@ -84,7 +86,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<VpnBloc, VpnState>(
+    return Stack(
+      children: [
+        BlocListener<VpnBloc, VpnState>(
       bloc: widget.vpnBloc,
       listener: (context, state) {
         if (state is VpnConnected) {
@@ -228,8 +232,8 @@ class _HomePageState extends State<HomePage> {
                         ),
                         SizedBox(height: 25),
                         ServerItemWidget(
-                          flagAsset: server?.image ?? 'assets/logo.png',
-                          label: server?.name ?? 'No sever selected',
+                          flagAsset: 'assets/logo.png',
+                          label: server?.country ?? 'No sever selected',
                           icon: Icons.arrow_forward_ios,
                           onTap: () async {
                             final res = await Navigator.of(context)
@@ -275,7 +279,17 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               );
-            })));
+            }))),
+            if (_showingAds)
+              AdsOverlay(
+                onClose: () {
+                  setState(() {
+                    _showingAds = false;
+                  });
+                },
+              ),
+      ],
+    );
   }
 
   String connectionState({FlutterVpnState? state}) {
