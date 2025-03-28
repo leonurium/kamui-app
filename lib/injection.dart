@@ -4,7 +4,6 @@ import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
 import 'package:kamui_app/presentation/blocs/splash/splash_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart';
 
 import 'core/network/api_client.dart';
 import 'data/repositories/auth_repository_impl.dart';
@@ -32,7 +31,7 @@ Future<void> init() async {
     sl.registerLazySingleton<ApiClient>(() => ApiClient());
     
     // Initialize SharedPreferences
-    SharedPreferences.setMockInitialValues({});  // For testing/initialization
+    // SharedPreferences.setMockInitialValues({});  // For testing/initialization
     final prefs = await SharedPreferences.getInstance();
     sl.registerSingleton<SharedPreferences>(prefs);
 
