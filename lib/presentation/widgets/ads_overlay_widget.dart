@@ -33,27 +33,6 @@ class _AdsOverlayState extends State<AdsOverlay> {
       final List<dynamic> adsList = jsonDecode(adsJson);
       final ads = adsList.map((json) => Ad.fromJson(json)).toList();
       if (ads.isNotEmpty) {
-        // final List<Ad> mockAds = [
-        //   Ad(
-        //     id: 1,
-        //     title: "Watch Video to Get 1 Hour Free",
-        //     mediaType: "video",
-        //     // Using a smaller video file
-        //     mediaUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-        //     clickUrl: "https://example.com/promo",
-        //     countdown: 30,
-        //   ),
-        //   Ad(
-        //     id: 2,
-        //     title: "Special VPN Offer - 50% OFF",
-        //     mediaType: "image",
-        //     // Using smaller image dimensions
-        //     mediaUrl: "https://picsum.photos/400/600",
-        //     clickUrl: "https://example.com/offer",
-        //     countdown: 10,
-        //   ),
-        // ];
-        // mockAds.shuffle();
         ads.shuffle();
         setState(() {
           currentAd = ads.first;
@@ -86,14 +65,13 @@ class _AdsOverlayState extends State<AdsOverlay> {
   void _initializeVideo() {
     final ad = currentAd;
     if (ad == null) return;
-    
+
     setState(() {
       _isVideoLoading = true;
     });
 
-    _videoController = VideoPlayerController.networkUrl(
-      Uri.parse(ad.mediaUrl)
-    )..initialize().then((_) {
+    _videoController = VideoPlayerController.networkUrl(Uri.parse(ad.mediaUrl))
+      ..initialize().then((_) {
         if (mounted) {
           setState(() {
             _isVideoLoading = false;
@@ -137,10 +115,12 @@ class _AdsOverlayState extends State<AdsOverlay> {
                 children: [
                   if (_videoController?.value.isInitialized == true)
                     AspectRatio(
-                      aspectRatio: _videoController?.value.aspectRatio ?? 16/9,
+                      aspectRatio:
+                          _videoController?.value.aspectRatio ?? 16 / 9,
                       child: VideoPlayer(_videoController!),
                     ),
-                  if (_isVideoLoading || _videoController?.value.isBuffering == true)
+                  if (_isVideoLoading ||
+                      _videoController?.value.isBuffering == true)
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -169,7 +149,7 @@ class _AdsOverlayState extends State<AdsOverlay> {
                           CircularProgressIndicator(
                             color: Colors.white,
                             value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded / 
+                                ? loadingProgress.cumulativeBytesLoaded /
                                     loadingProgress.expectedTotalBytes!
                                 : null,
                           ),
@@ -186,7 +166,8 @@ class _AdsOverlayState extends State<AdsOverlay> {
                       return const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.error_outline, color: Colors.white, size: 48),
+                          Icon(Icons.error_outline,
+                              color: Colors.white, size: 48),
                           SizedBox(height: 8),
                           Text(
                             'Failed to load image',
@@ -198,51 +179,16 @@ class _AdsOverlayState extends State<AdsOverlay> {
                   ),
                 ],
               ),
-              SizedBox(
-                width: double.infinity,
-                height: double.infinity,
-                child: Image.network(
-                  ad.mediaUrl,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded / 
-                                loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    Logger.error("Failed to load image: $error");
-                    return const Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.error_outline, color: Colors.white, size: 48),
-                          SizedBox(height: 8),
-                          Text(
-                            'Failed to load image',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
             Positioned(
               top: 40,
               right: 16,
               child: Column(
                 children: [
-                  Text(
-                    '$countdown',
-                    style: const TextStyle(color: Colors.white, fontSize: 18),
-                  ),
+                  if (!canClose)
+                    Text(
+                      '$countdown',
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
                   if (canClose)
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.white),
@@ -262,7 +208,7 @@ class _AdsOverlayState extends State<AdsOverlay> {
                 child: GestureDetector(
                   onTap: () {
                     if (currentAd?.clickUrl != null) {
-                      // Handle URL click
+                      Logger.info("Clicked on ad: ${currentAd?.clickUrl}");
                     }
                   },
                   child: Text(
