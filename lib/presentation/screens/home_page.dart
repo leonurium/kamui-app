@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:avatar_glow/avatar_glow.dart';
-import 'package:kamui_app/core/utils/signature.dart';
-import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/presentation/screens/server_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_vpn/flutter_vpn.dart';
@@ -50,12 +48,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _handleVpnDisconnection() {
-    if (currentSession != null) {
-      widget.vpnBloc.add(DisconnectVpnEvent(currentSession!.id));
-      FlutterVpn.disconnect();
-    }
-  }
+  // void _handleVpnDisconnection() {
+  //   if (currentSession != null) {
+  //     widget.vpnBloc.add(DisconnectVpnEvent(currentSession!.id));
+  //     FlutterVpn.disconnect();
+  //   }
+  // }
 
   Stream<String> vpnConnectionDuration() async* {
     if (server == null) {

@@ -1,4 +1,4 @@
-package dev.etornam.etornam_vpn;
+package com.gamavpn.app;
 
 import io.flutter.embedding.android.FlutterActivity;
 

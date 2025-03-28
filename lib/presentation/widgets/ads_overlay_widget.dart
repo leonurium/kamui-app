@@ -33,30 +33,30 @@ class _AdsOverlayState extends State<AdsOverlay> {
       final List<dynamic> adsList = jsonDecode(adsJson);
       final ads = adsList.map((json) => Ad.fromJson(json)).toList();
       if (ads.isNotEmpty) {
-        final List<Ad> mockAds = [
-          Ad(
-            id: 1,
-            title: "Watch Video to Get 1 Hour Free",
-            mediaType: "video",
-            // Using a smaller video file
-            mediaUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-            clickUrl: "https://example.com/promo",
-            countdown: 30,
-          ),
-          Ad(
-            id: 2,
-            title: "Special VPN Offer - 50% OFF",
-            mediaType: "image",
-            // Using smaller image dimensions
-            mediaUrl: "https://picsum.photos/400/600",
-            clickUrl: "https://example.com/offer",
-            countdown: 10,
-          ),
-        ];
-        mockAds.shuffle();
+        // final List<Ad> mockAds = [
+        //   Ad(
+        //     id: 1,
+        //     title: "Watch Video to Get 1 Hour Free",
+        //     mediaType: "video",
+        //     // Using a smaller video file
+        //     mediaUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        //     clickUrl: "https://example.com/promo",
+        //     countdown: 30,
+        //   ),
+        //   Ad(
+        //     id: 2,
+        //     title: "Special VPN Offer - 50% OFF",
+        //     mediaType: "image",
+        //     // Using smaller image dimensions
+        //     mediaUrl: "https://picsum.photos/400/600",
+        //     clickUrl: "https://example.com/offer",
+        //     countdown: 10,
+        //   ),
+        // ];
+        // mockAds.shuffle();
         ads.shuffle();
         setState(() {
-          currentAd = mockAds.first;
+          currentAd = ads.first;
           countdown = currentAd?.countdown ?? 10;
         });
         if (currentAd?.mediaType == 'video') {

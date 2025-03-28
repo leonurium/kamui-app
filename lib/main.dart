@@ -9,13 +9,20 @@ import 'injection.dart' as di;
 import 'presentation/screens/splash_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await di.init();
-  await dotenv.load();
-  runApp(App());
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    await dotenv.load();
+    await di.init();
+    runApp(const App());
+  } catch (e) {
+    debugPrint('Error during initialization: $e');
+    runApp(ErrorApp(error: e.toString()));
+  }
 }
 
 class App extends StatelessWidget {
+  const App({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -34,6 +41,50 @@ class App extends StatelessWidget {
           ),
         ],
         child: SplashScreen(),
+      ),
+    );
+  }
+}
+
+class ErrorApp extends StatelessWidget {
+  final String error;
+  
+  const ErrorApp({Key? key, required this.error}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text(
+                  'Initialization Error',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Please restart the app. If the problem persists, please contact support.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16),
+                ),
+                if (error.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error details: $error',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

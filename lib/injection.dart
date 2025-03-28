@@ -1,8 +1,10 @@
 // lib/injection.dart
 import 'package:get_it/get_it.dart';
+import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
 import 'package:kamui_app/presentation/blocs/splash/splash_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 import 'core/network/api_client.dart';
 import 'data/repositories/auth_repository_impl.dart';
@@ -25,37 +27,45 @@ import 'domain/usecases/get_ads_usecase.dart';
 final GetIt sl = GetIt.instance;
 
 Future<void> init() async {
-  // Core
-  sl.registerLazySingleton<ApiClient>(() => ApiClient());
-  final sharedPreferences = await SharedPreferences.getInstance();
-  sl.registerLazySingleton(() => sharedPreferences);
+  try {
+    // Core
+    sl.registerLazySingleton<ApiClient>(() => ApiClient());
+    
+    // Initialize SharedPreferences
+    SharedPreferences.setMockInitialValues({});  // For testing/initialization
+    final prefs = await SharedPreferences.getInstance();
+    sl.registerSingleton<SharedPreferences>(prefs);
 
-  // Repositories
-  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
-  sl.registerLazySingleton<VpnRepository>(() => VpnRepositoryImpl(sl()));
-  sl.registerLazySingleton<PremiumRepository>(() => PremiumRepositoryImpl(sl()));
-  sl.registerLazySingleton<AdsRepository>(() => AdsRepositoryImpl(sl()));
+    // Repositories
+    sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
+    sl.registerLazySingleton<VpnRepository>(() => VpnRepositoryImpl(sl()));
+    sl.registerLazySingleton<PremiumRepository>(() => PremiumRepositoryImpl(sl()));
+    sl.registerLazySingleton<AdsRepository>(() => AdsRepositoryImpl(sl()));
 
-  // Use cases
-  sl.registerLazySingleton<RegisterDeviceUseCase>(() => RegisterDeviceUseCase(sl()));
-  sl.registerLazySingleton<GetServersUseCase>(() => GetServersUseCase(sl()));
-  sl.registerLazySingleton<ConnectVpnUseCase>(() => ConnectVpnUseCase(sl()));
-  sl.registerLazySingleton<DisconnectVpnUseCase>(() => DisconnectVpnUseCase(sl()));
-  sl.registerLazySingleton<GetPackagesUseCase>(() => GetPackagesUseCase(sl()));
-  sl.registerLazySingleton<PurchasePackageUseCase>(() => PurchasePackageUseCase(sl()));
-  sl.registerLazySingleton<GetPaymentHistoriesUseCase>(() => GetPaymentHistoriesUseCase(sl()));
-  sl.registerLazySingleton<GetAdsUseCase>(() => GetAdsUseCase(sl()));
+    // Use cases
+    sl.registerLazySingleton<RegisterDeviceUseCase>(() => RegisterDeviceUseCase(sl()));
+    sl.registerLazySingleton<GetServersUseCase>(() => GetServersUseCase(sl()));
+    sl.registerLazySingleton<ConnectVpnUseCase>(() => ConnectVpnUseCase(sl()));
+    sl.registerLazySingleton<DisconnectVpnUseCase>(() => DisconnectVpnUseCase(sl()));
+    sl.registerLazySingleton<GetPackagesUseCase>(() => GetPackagesUseCase(sl()));
+    sl.registerLazySingleton<PurchasePackageUseCase>(() => PurchasePackageUseCase(sl()));
+    sl.registerLazySingleton<GetPaymentHistoriesUseCase>(() => GetPaymentHistoriesUseCase(sl()));
+    sl.registerLazySingleton<GetAdsUseCase>(() => GetAdsUseCase(sl()));
 
-  // blocs
-  sl.registerLazySingleton<VpnBloc>(() => VpnBloc(
-    sl<GetServersUseCase>(),
-    sl<ConnectVpnUseCase>(),
-    sl<DisconnectVpnUseCase>(),
-  ));
-  
-  sl.registerLazySingleton<SplashBloc>(() => SplashBloc(
-    getServersUseCase: sl<GetServersUseCase>(),
-    getAdsUseCase: sl<GetAdsUseCase>(),
-    registerDeviceUseCase: sl<RegisterDeviceUseCase>(),
-  ));
+    // blocs
+    sl.registerLazySingleton<VpnBloc>(() => VpnBloc(
+      sl<GetServersUseCase>(),
+      sl<ConnectVpnUseCase>(),
+      sl<DisconnectVpnUseCase>(),
+    ));
+    
+    sl.registerLazySingleton<SplashBloc>(() => SplashBloc(
+      getServersUseCase: sl<GetServersUseCase>(),
+      getAdsUseCase: sl<GetAdsUseCase>(),
+      registerDeviceUseCase: sl<RegisterDeviceUseCase>(),
+    ));
+  } catch (e) {
+    Logger.error('Error in dependency injection: $e');
+    rethrow;
+  }
 }
