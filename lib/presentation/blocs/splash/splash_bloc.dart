@@ -56,10 +56,31 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
 
       // Get and save ads
       final ads = await getAdsUseCase.execute();
-      if (ads.isNotEmpty) {
+      if (!ads.isNotEmpty) {
         await prefs.setString('ads', jsonEncode(
           ads.map((ad) => ad.toJson()).toList()
         ));
+      } else {
+        // Add mockup ads if no ads from server
+        final mockupAds = [
+          {
+            'id': 1,
+            'title': 'Premium VPN Features',
+            'media_type': 'video',
+            'media_url': 'https://short.rctiplus.id/vod-e5a2a2/sv/28c0e81d-194d9aa9fc8/28c0e81d-194d9aa9fc8.mp4',
+            'click_url': 'https://example.com/premium',
+            'countdown': 10,
+          },
+          {
+            'id': 2,
+            'title': 'Fast & Secure VPN',
+            'media_type': 'video',
+            'media_url': 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+            'click_url': 'https://example.com/features',
+            'countdown': 10,
+          }
+        ];
+        await prefs.setString('ads', jsonEncode(mockupAds));
       }
 
       emit(SplashLoaded());

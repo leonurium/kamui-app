@@ -114,10 +114,11 @@ class _AdsOverlayState extends State<AdsOverlay> {
                 alignment: Alignment.center,
                 children: [
                   if (_videoController?.value.isInitialized == true)
-                    AspectRatio(
-                      aspectRatio:
-                          _videoController?.value.aspectRatio ?? 16 / 9,
-                      child: VideoPlayer(_videoController!),
+                    Center(
+                      child: AspectRatio(
+                        aspectRatio: _videoController?.value.aspectRatio ?? 16 / 9,
+                        child: VideoPlayer(_videoController!),
+                      ),
                     ),
                   if (_isVideoLoading ||
                       _videoController?.value.isBuffering == true)
