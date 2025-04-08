@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:kamui_app/core/utils/logger.dart';
@@ -63,7 +64,7 @@ class _AdsOverlayState extends State<AdsOverlay> {
 
   bool _isVideoLoading = false;
 
-  void _initializeVideo() {
+  void _initializeVideo() async {
     final ad = currentAd;
     if (ad == null) return;
 
@@ -71,31 +72,40 @@ class _AdsOverlayState extends State<AdsOverlay> {
       _isVideoLoading = true;
     });
 
-    _videoController = VideoPlayerController.networkUrl(Uri.parse(ad.mediaUrl))
-      ..initialize().then((_) {
-        if (mounted) {
-          setState(() {
-            _isVideoLoading = false;
-          });
-          _videoController?.play();
-          _videoController?.setLooping(true);
-        }
-      }).catchError((error) {
-        Logger.error("Failed to load video: $error");
-        if (mounted) {
-          setState(() {
-            _isVideoLoading = false;
-            currentAd = Ad(
-              id: ad.id,
-              title: "Unable to load video",
-              mediaType: "image",
-              mediaUrl: "https://picsum.photos/400/600",
-              clickUrl: ad.clickUrl,
-              countdown: ad.countdown,
-            );
-          });
-        }
-      });
+    try {
+      _videoController = VideoPlayerController.networkUrl(Uri.parse(ad.mediaUrl));
+      
+      await _videoController?.initialize().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException('Video initialization timed out');
+        },
+      );
+
+      if (mounted) {
+        setState(() {
+          _isVideoLoading = false;
+        });
+        _videoController?.play();
+        _videoController?.setLooping(true);
+      }
+    } catch (error) {
+      Logger.error("Failed to load video: $error");
+      if (mounted) {
+        setState(() {
+          _isVideoLoading = false;
+          // Fallback to image if video fails to load
+          currentAd = Ad(
+            id: ad.id,
+            title: ad.title,
+            mediaType: "image",
+            mediaUrl: "https://picsum.photos/400/600",
+            clickUrl: ad.clickUrl,
+            countdown: ad.countdown,
+          );
+        });
+      }
+    }
   }
 
   Future<void> _launchUrl() async {
@@ -280,5 +290,11 @@ class _AdsOverlayState extends State<AdsOverlay> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    super.dispose();
   }
 }
