@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:kamui_app/core/utils/logger.dart';
@@ -12,6 +13,8 @@ import 'package:kamui_app/domain/entities/server.dart';
 import 'package:kamui_app/domain/entities/session.dart';
 import 'package:kamui_app/presentation/widgets/ads_overlay_widget.dart';
 import 'package:wireguard_flutter/wireguard_flutter_platform_interface.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kamui_app/injection.dart' as di;
 
 import '../widgets/server_list_widget.dart';
 
@@ -35,11 +38,15 @@ class _HomePageState extends State<HomePage> {
   final WireGuardFlutterInterface _wireguard = WireGuardFlutter.instance;
   StreamSubscription? _vpnStateSubscription;
   VpnStage _currentStage = VpnStage.disconnected;
+  late SharedPreferences _prefs;
 
   @override
   void initState() {
     super.initState();
     Logger.info('HomePage: Initializing with VpnBloc: ${widget.vpnBloc}');
+    
+    // Get SharedPreferences instance from GetIt
+    _prefs = di.sl<SharedPreferences>();
     
     if (!widget.vpnBloc.isClosed) {
       widget.vpnBloc.add(LoadServersEvent());
@@ -57,12 +64,45 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _initWireguard() async {
-    await _wireguard.initialize(interfaceName: "wg0");
-    _vpnStateSubscription = _wireguard.vpnStageSnapshot.listen((stage) {
-      setState(() {
-        _currentStage = stage;
-      });
-    });
+    try {
+      Logger.info('Initializing WireGuard VPN...');
+      
+      // Try to initialize WireGuard
+      await _wireguard.initialize(interfaceName: "wg0");
+      Logger.info('WireGuard VPN initialized successfully');
+      
+      _vpnStateSubscription = _wireguard.vpnStageSnapshot.listen(
+        (stage) {
+          Logger.info('VPN Stage changed to: $stage');
+          if (mounted) {
+            setState(() {
+              _currentStage = stage;
+            });
+          }
+        },
+        onError: (error) {
+          Logger.error('Error in VPN stage listener: $error');
+          if (mounted) {
+            setState(() {
+              _currentStage = VpnStage.disconnected;
+            });
+          }
+        },
+      );
+    } catch (e) {
+      Logger.error('Failed to initialize WireGuard VPN: $e');
+      if (mounted) {
+        setState(() {
+          _currentStage = VpnStage.disconnected;
+        });
+      }
+      // Show error to user if it's not an IPC error
+      if (!e.toString().contains('IPC failed')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to initialize VPN: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -166,7 +206,7 @@ class _HomePageState extends State<HomePage> {
         );
         
         // Add disconnect event to bloc
-        widget.vpnBloc.add(DisconnectVpnEvent(currentSession!.id));
+        widget.vpnBloc.add(DisconnectVpnEvent(currentSession!.sessionId));
       } else {
         // ScaffoldMessenger.of(context).showSnackBar(
         //   SnackBar(content: Text('No active connection to disconnect')),
@@ -177,6 +217,11 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _connectWireguard(Session session) async {
     try {
+      // Save session data to SharedPreferences
+      final sessionJson = jsonEncode(session.toJson());
+      await _prefs.setString('current_session', sessionJson);
+      Logger.info('Session data saved to SharedPreferences');
+
       final config = '''
 [Interface]
 PrivateKey = ${session.privateKey}
@@ -214,16 +259,55 @@ Endpoint = ${session.endpoint}:${session.listenPort}
   }
 
   Future<void> _disconnectWireguard() async {
+    Logger.warning("hello world");
     try {
-      await _wireguard.stopVpn();
-      setState(() {
-        _currentStage = VpnStage.disconnected;
-      });
+      // Get session data from SharedPreferences
+      final sessionJson = _prefs.getString('current_session');
+      
+      if (sessionJson != null) {
+        try {
+          // Parse session data first
+          final sessionData = jsonDecode(sessionJson);
+          final session = Session.fromJson(sessionData);
+          
+          // Stop VPN
+          await _wireguard.stopVpn();
+          setState(() {
+            _currentStage = VpnStage.disconnected;
+          });
+          
+          // Add disconnect event to bloc with session ID
+          widget.vpnBloc.add(DisconnectVpnEvent(session.sessionId));
+          
+          // Clear session data from SharedPreferences
+          await _prefs.remove('current_session');
+          Logger.info('Session data cleared from SharedPreferences');
+        } catch (e) {
+          Logger.error('Error parsing session data: $e');
+          // Clear invalid session data
+          await _prefs.remove('current_session');
+          // Still try to stop VPN even if session data is invalid
+          await _wireguard.stopVpn();
+          setState(() {
+            _currentStage = VpnStage.disconnected;
+          });
+        }
+      } else {
+        Logger.info('No session data found, stopping VPN directly');
+        // Stop VPN if no session data
+        await _wireguard.stopVpn();
+        setState(() {
+          _currentStage = VpnStage.disconnected;
+        });
+      }
     } catch (e) {
       Logger.error('WireGuard disconnection error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to disconnect from VPN: $e')),
       );
+      setState(() {
+        _currentStage = VpnStage.disconnected;
+      });
     }
   }
 

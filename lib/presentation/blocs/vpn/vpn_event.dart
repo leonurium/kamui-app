@@ -19,7 +19,7 @@ class ConnectVpnEvent extends VpnEvent {
 }
 
 class DisconnectVpnEvent extends VpnEvent {
-  final int sessionId;
+  final String sessionId;
 
   const DisconnectVpnEvent(this.sessionId);
 

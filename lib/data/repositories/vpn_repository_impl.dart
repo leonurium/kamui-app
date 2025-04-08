@@ -64,7 +64,7 @@ class VpnRepositoryImpl implements VpnRepository {
   }
 
   @override
-  Future<bool> disconnect(int sessionId) async {
+  Future<bool> disconnect(String sessionId) async {
     try {
       final response = await _apiClient.dio.post(
         '/api/vpn/disconnect',

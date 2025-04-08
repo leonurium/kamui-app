@@ -5,7 +5,7 @@ class DisconnectVpnUseCase {
 
   DisconnectVpnUseCase(this.repository);
 
-  Future<bool> execute(int sessionId) {
+  Future<bool> execute(String sessionId) {
     return repository.disconnect(sessionId);
   }
 }
