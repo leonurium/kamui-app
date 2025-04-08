@@ -176,6 +176,7 @@ lib/
 
 - ads should be have auto click, settings by cms
 - logo app is it already fix?
+- add field for flag country image
 
 ads
 - first load showing ads

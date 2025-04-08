@@ -168,9 +168,9 @@ class _HomePageState extends State<HomePage> {
         // Add disconnect event to bloc
         widget.vpnBloc.add(DisconnectVpnEvent(currentSession!.id));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No active connection to disconnect')),
-        );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(content: Text('No active connection to disconnect')),
+        // );
       }
     }
   }
@@ -179,18 +179,20 @@ class _HomePageState extends State<HomePage> {
     try {
       final config = '''
 [Interface]
-PrivateKey = ${session.clientPrivateKey}
-Address = ${session.serverAddress}
-DNS = ${session.dnsServer}
+PrivateKey = ${session.privateKey}
+Address = ${session.ipAddress}
+DNS = 1.1.1.1, 8.8.8.8
 
 [Peer]
-PublicKey = ${session.serverPublicKey}
-AllowedIPs = ${session.allowedIps}
-Endpoint = ${session.serverEndpoint}:${session.serverPort}
+PublicKey = ${session.publicKey}
+AllowedIPs = 0.0.0.0/0
+Endpoint = ${session.endpoint}:${session.listenPort}
 ''';
 
+      Logger.info('Starting WireGuard VPN with config: $config');
+      
       await _wireguard.startVpn(
-        serverAddress: session.serverEndpoint,
+        serverAddress: session.endpoint,
         wgQuickConfig: config,
         providerBundleIdentifier: 'com.gamavpn.app',
       );
@@ -198,6 +200,8 @@ Endpoint = ${session.serverEndpoint}:${session.serverPort}
       setState(() {
         _currentStage = VpnStage.connected;
       });
+      
+      Logger.info('WireGuard VPN started successfully');
     } catch (e) {
       Logger.error('WireGuard connection error: $e');
       ScaffoldMessenger.of(context).showSnackBar(

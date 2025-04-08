@@ -1,97 +1,81 @@
 class Session {
   final int id;
-  final String serverId;
-  final String serverName;
-  final String serverIp;
+  final String sessionId;
+  final int userId;
+  final int serverId;
+  final int poolId;
+  final String poolName;
+  final String privateKey;
+  final String publicKey;
+  final String endpoint;
+  final int listenPort;
+  final String ipAddress;
   final String startTime;
-  final String endTime;
-  final String duration;
+  final String? endTime;
+  final int totalDuration;
   final String status;
-  final String? privateKey;
-  final String? publicKey;
-  final String? presharedKey;
-  final String? endpoint;
-  final String? allowedIps;
-  final String? dns;
-  final String serverAddress;
-  final String dnsServer;
-  final String clientPrivateKey;
-  final String clientPublicKey;
-  final String serverPublicKey;
-  final int serverPort;
-  final String serverEndpoint;
+  final String createdAt;
+  final String expiresAt;
 
   Session({
     required this.id,
+    required this.sessionId,
+    required this.userId,
     required this.serverId,
-    required this.serverName,
-    required this.serverIp,
+    required this.poolId,
+    required this.poolName,
+    required this.privateKey,
+    required this.publicKey,
+    required this.endpoint,
+    required this.listenPort,
+    required this.ipAddress,
     required this.startTime,
-    required this.endTime,
-    required this.duration,
+    this.endTime,
+    required this.totalDuration,
     required this.status,
-    this.privateKey,
-    this.publicKey,
-    this.presharedKey,
-    this.endpoint,
-    this.allowedIps,
-    this.dns,
-    required this.serverAddress,
-    required this.dnsServer,
-    required this.clientPrivateKey,
-    required this.clientPublicKey,
-    required this.serverPublicKey,
-    required this.serverPort,
-    required this.serverEndpoint,
+    required this.createdAt,
+    required this.expiresAt,
   });
 
   factory Session.fromJson(Map<String, dynamic> json) {
     return Session(
-      id: json['id'],
-      serverId: json['server_id'],
-      serverName: json['server_name'],
-      serverIp: json['server_ip'],
-      startTime: json['start_time'],
-      endTime: json['end_time'] ?? '',
-      duration: json['duration'] ?? '',
-      status: json['status'],
-      privateKey: json['private_key'],
-      publicKey: json['public_key'],
-      presharedKey: json['preshared_key'],
-      endpoint: json['endpoint'],
-      allowedIps: json['allowed_ips'],
-      dns: json['dns'],
-      serverAddress: json['server_address'],
-      dnsServer: json['dns_server'],
-      clientPrivateKey: json['client_private_key'],
-      clientPublicKey: json['client_public_key'],
-      serverPublicKey: json['server_public_key'],
-      serverPort: json['server_port'],
-      serverEndpoint: json['server_endpoint'],
+      id: json['ID'] ?? 0,
+      sessionId: json['SessionID'] ?? '',
+      userId: json['UserID'] ?? 0,
+      serverId: json['ServerID'] ?? 0,
+      poolId: json['PoolID'] ?? 0,
+      poolName: json['PoolName'] ?? '',
+      privateKey: json['PrivateKey'] ?? '',
+      publicKey: json['PublicKey'] ?? '',
+      endpoint: json['Endpoint'] ?? '',
+      listenPort: json['ListenPort'] ?? 0,
+      ipAddress: json['IPAddress'] ?? '',
+      startTime: json['StartTime'] ?? '',
+      endTime: json['EndTime'],
+      totalDuration: json['TotalDuration'] ?? 0,
+      status: json['Status'] ?? '',
+      createdAt: json['CreatedAt'] ?? '',
+      expiresAt: json['ExpiresAt'] ?? '',
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'server_id': serverId,
-    'server_name': serverName,
-    'server_ip': serverIp,
-    'start_time': startTime,
-    'end_time': endTime,
-    'duration': duration,
-    'status': status,
-    'private_key': privateKey,
-    'public_key': publicKey,
-    'preshared_key': presharedKey,
-    'endpoint': endpoint,
-    'allowed_ips': allowedIps,
-    'dns': dns,
-    'server_address': serverAddress,
-    'dns_server': dnsServer,
-    'client_private_key': clientPrivateKey,
-    'client_public_key': clientPublicKey,
-    'server_public_key': serverPublicKey,
-    'server_port': serverPort,
-    'server_endpoint': serverEndpoint,
+    'ID': id,
+    'SessionID': sessionId,
+    'UserID': userId,
+    'ServerID': serverId,
+    'PoolID': poolId,
+    'PoolName': poolName,
+    'PrivateKey': privateKey,
+    'PublicKey': publicKey,
+    'Endpoint': endpoint,
+    'ListenPort': listenPort,
+    'IPAddress': ipAddress,
+    'StartTime': startTime,
+    'EndTime': endTime,
+    'TotalDuration': totalDuration,
+    'Status': status,
+    'CreatedAt': createdAt,
+    'ExpiresAt': expiresAt,
   };
 }
