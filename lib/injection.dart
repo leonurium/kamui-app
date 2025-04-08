@@ -22,6 +22,7 @@ import 'domain/usecases/get_packages_usecase.dart';
 import 'domain/usecases/purchase_package_usecase.dart';
 import 'domain/usecases/get_payment_histories_usecase.dart';
 import 'domain/usecases/get_ads_usecase.dart';
+import 'presentation/blocs/server_list/server_list_bloc.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -63,6 +64,8 @@ Future<void> init() async {
       getAdsUseCase: sl<GetAdsUseCase>(),
       registerDeviceUseCase: sl<RegisterDeviceUseCase>(),
     ));
+
+    sl.registerFactory<ServerListBloc>(() => ServerListBloc(sl<SharedPreferences>()));
   } catch (e) {
     Logger.error('Error in dependency injection: $e');
     rethrow;

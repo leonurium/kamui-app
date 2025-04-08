@@ -1,234 +1,175 @@
-import 'package:kamui_app/presentation/widgets/server_list_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:roundcheckbox/roundcheckbox.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../domain/entities/server.dart';
+import '../blocs/server_list/server_list_bloc.dart';
+import '../widgets/server_list_widget.dart';
+import 'package:kamui_app/injection.dart' as di;
 
-class ServerListPage extends StatefulWidget {
-  @override
-  _ServerListPageState createState() => _ServerListPageState();
-}
-
-class _ServerListPageState extends State<ServerListPage> {
-  ServerVPN server = ServerVPN(
-      name: 'Ghana',
-      flag: 'assets/ghana.png',
-      domain: 'PL226.vpnbook.com',
-      username: 'vpnbook',
-      password: '3ev7r8m',
-      port: 443,
-      mtu: 1234);
-  final premiumServers = <ServerVPN>[
-    ServerVPN(
-        name: 'England',
-        flag: 'assets/england.png',
-        domain: 'vpn.example.com',
-        username: 'admin',
-        password: 'admin',
-        port: 1234,
-        mtu: 1234),
-    ServerVPN(
-        name: 'United States',
-        flag: 'assets/usa.jpg',
-        domain: 'vpn.example.com',
-        username: 'admin',
-        password: 'admin',
-        port: 1234,
-        mtu: 1234),
-    ServerVPN(
-        name: 'Canada',
-        flag: 'assets/canada.png',
-        domain: 'vpn.example.com',
-        username: 'admin',
-        password: 'admin',
-        port: 1234,
-        mtu: 1234),
-    ServerVPN(
-        name: 'France',
-        flag: 'assets/france.png',
-        domain: 'vpn.example.com',
-        username: 'admin',
-        password: 'admin',
-        port: 1234,
-        mtu: 1234),
-    ServerVPN(
-        name: 'Ghana',
-        flag: 'assets/ghana.png',
-        domain: 'vpn.example.com',
-        username: 'admin',
-        password: 'admin',
-        port: 1234,
-        mtu: 1234),
-  ];
-
-  List<ServerVPN> freeServers = [
-    ServerVPN(
-        name: 'England',
-        flag: 'assets/england.png',
-        domain: 'vpn.example.com',
-        username: 'admin',
-        password: 'admin',
-        port: 1234,
-        mtu: 1234),
-    ServerVPN(
-        name: 'France',
-        flag: 'assets/france.png',
-        domain: 'vpn.example.com',
-        username: 'admin',
-        password: 'admin',
-        port: 1234,
-        mtu: 1234),
-    ServerVPN(
-        name: 'Ghana',
-        flag: 'assets/ghana.png',
-        domain: 'vpn.example.com',
-        username: 'admin',
-        password: 'admin',
-        port: 1234,
-        mtu: 1234),
-  ];
+class ServerListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.of(context).pop(server);
-        return true;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'Servers',
-            style: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w600),
-          ),
-        ),
-        body: ListView(
-          shrinkWrap: true,
-          padding: EdgeInsets.all(20),
-          children: [
-            RichText(
-                text: TextSpan(
-                    text: 'Premuim ',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall!
-                        .copyWith(fontWeight: FontWeight.w700),
-                    children: [
-                  TextSpan(
-                      text: 'Servers',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleSmall!
-                          .copyWith(fontWeight: FontWeight.normal))
-                ])),
-            SizedBox(
-              height: 20,
-            ),
-            Container(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: premiumServers.length,
-                itemBuilder: (_, index) {
-                  return ServerItemWidget(
-                      isFaded: true,
-                      label: premiumServers[index].name!,
-                      icon: Icons.lock,
-                      flagAsset: premiumServers[index].flag!,
-                      onTap: () {
-                        setState(() {
-                          server = premiumServers[index];
-                        });
-                      });
-                },
-                separatorBuilder: (_, index) => SizedBox(height: 10),
+    return BlocProvider(
+      create: (context) => di.sl<ServerListBloc>()..add(LoadServersEvent()),
+      child: BlocBuilder<ServerListBloc, ServerListState>(
+        builder: (context, state) {
+          if (state is ServerListLoading) {
+            return Scaffold(
+              appBar: AppBar(
+                title: Text(
+                  'Servers',
+                  style: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w600),
+                ),
               ),
-            ),
-            SizedBox(height: 30),
-            RichText(
-                text: TextSpan(
-                    text: 'Free ',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall!
-                        .copyWith(fontWeight: FontWeight.w700),
-                    children: [
-                  TextSpan(
-                      text: 'Servers',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleSmall!
-                          .copyWith(fontWeight: FontWeight.normal))
-                ])),
-            SizedBox(
-              height: 20,
-            ),
-            Container(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: freeServers.length,
-                itemBuilder: (_, index) {
-                  return Material(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Theme.of(context).cardColor,
-                    child: Padding(
-                      padding: const EdgeInsets.all(7.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          if (state is ServerListError) {
+            return Scaffold(
+              appBar: AppBar(
+                title: Text(
+                  'Servers',
+                  style: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+              body: Center(child: Text(state.message)),
+            );
+          }
+
+          if (state is ServerListLoaded) {
+            return WillPopScope(
+              onWillPop: () async {
+                Navigator.of(context).pop(state.selectedServer);
+                return true;
+              },
+              child: Scaffold(
+                appBar: AppBar(
+                  title: Text(
+                    'Servers',
+                    style: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                body: ListView(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.all(20),
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        text: 'Premium ',
+                        style: Theme.of(context).textTheme.titleSmall!.copyWith(fontWeight: FontWeight.w700),
                         children: [
-                          Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              CircleAvatar(
-                                radius: 15,
-                                backgroundColor: Colors.white,
-                                backgroundImage: ExactAssetImage(
-                                  freeServers[index].flag!,
-                                ),
-                              ),
-                              SizedBox(
-                                width: 15,
-                              ),
-                              Text(
-                                freeServers[index].name!,
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                            ],
-                          ),
-                          RoundCheckBox(
-                            size: 24,
-                            checkedWidget: const Icon(Icons.check, size: 18, color: Colors.white),
-                            borderColor: freeServers[index] == server
-                                ? Theme.of(context).scaffoldBackgroundColor
-                                : Color.fromRGBO(37, 112, 252, 1),
-                            checkedColor: Color.fromRGBO(37, 112, 252, 1),
-                            isChecked: freeServers[index] == server,
-                            onTap: (x) {
-                              setState(() {
-                                server = freeServers[index];
-                              });
-                            },
-                          ),
-                        ],
-                      ),
+                          TextSpan(
+                            text: 'Servers',
+                            style: Theme.of(context).textTheme.titleSmall!.copyWith(fontWeight: FontWeight.normal)
+                          )
+                        ]
+                      )
                     ),
-                  );
-                },
-                separatorBuilder: (_, index) => SizedBox(height: 10),
+                    SizedBox(height: 20),
+                    ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: state.premiumServers.length,
+                      itemBuilder: (_, index) {
+                        final server = state.premiumServers[index];
+                        return ServerItemWidget(
+                          isFaded: true,
+                          label: server.city,
+                          icon: Icons.lock,
+                          flagAsset: _getFlagAsset(server.country),
+                          onTap: () {
+                            context.read<ServerListBloc>().add(SelectServerEvent(server));
+                          },
+                        );
+                      },
+                      separatorBuilder: (_, index) => SizedBox(height: 10),
+                    ),
+                    SizedBox(height: 30),
+                    RichText(
+                      text: TextSpan(
+                        text: 'Free ',
+                        style: Theme.of(context).textTheme.titleSmall!.copyWith(fontWeight: FontWeight.w700),
+                        children: [
+                          TextSpan(
+                            text: 'Servers',
+                            style: Theme.of(context).textTheme.titleSmall!.copyWith(fontWeight: FontWeight.normal)
+                          )
+                        ]
+                      )
+                    ),
+                    SizedBox(height: 20),
+                    ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: state.freeServers.length,
+                      itemBuilder: (_, index) {
+                        final server = state.freeServers[index];
+                        return Material(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Theme.of(context).cardColor,
+                          child: Padding(
+                            padding: const EdgeInsets.all(7.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Wrap(
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 15,
+                                      backgroundColor: Colors.white,
+                                      backgroundImage: ExactAssetImage(
+                                        _getFlagAsset(server.country),
+                                      ),
+                                    ),
+                                    SizedBox(width: 15),
+                                    Text(
+                                      server.city,
+                                      style: Theme.of(context).textTheme.bodyLarge,
+                                    ),
+                                  ],
+                                ),
+                                RoundCheckBox(
+                                  size: 24,
+                                  checkedWidget: const Icon(Icons.check, size: 18, color: Colors.white),
+                                  borderColor: server == state.selectedServer
+                                      ? Theme.of(context).scaffoldBackgroundColor
+                                      : Color.fromRGBO(37, 112, 252, 1),
+                                  checkedColor: Color.fromRGBO(37, 112, 252, 1),
+                                  isChecked: server == state.selectedServer,
+                                  onTap: (x) {
+                                    context.read<ServerListBloc>().add(SelectServerEvent(server));
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      separatorBuilder: (_, index) => SizedBox(height: 10),
+                    ),
+                  ],
+                ),
               ),
-            )
-          ],
-        ),
+            );
+          }
+
+          return SizedBox();
+        },
       ),
     );
   }
-}
 
-class ServerVPN {
-  String? flag;
-  String? name;
-  String? domain;
-  String? username;
-  String? password;
-  int? port;
-  int? mtu;
-
-  ServerVPN({this.flag, this.name, this.domain, this.username, this.password, this.port, this.mtu});
+  String _getFlagAsset(String country) {
+    // Map country names to flag assets
+    final flagAssets = {
+      'England': 'assets/england.png',
+      'United States': 'assets/usa.jpg',
+      'Canada': 'assets/canada.png',
+      'France': 'assets/france.png',
+      'Ghana': 'assets/ghana.png',
+    };
+    return flagAssets[country] ?? 'assets/ghana.png'; // Default to Ghana flag if not found
+  }
 }
