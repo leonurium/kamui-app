@@ -174,10 +174,6 @@ lib/
 │── theme.dart             # Global themes
 
 
-- hilangkan duplikat loading
-- countdown di replace jadi x ketika countdown selesai
-- tambah button untuk UI, tapi semua area bisa di click untuk redirect ke browser
-- button click di ads "lihat selengkapnya / more"
 - ads should be have auto click, settings by cms
 
 ads

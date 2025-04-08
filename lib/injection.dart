@@ -31,7 +31,7 @@ Future<void> init() async {
     sl.registerLazySingleton<ApiClient>(() => ApiClient());
     
     // Initialize SharedPreferences
-    // SharedPreferences.setMockInitialValues({});  // For testing/initialization
+    SharedPreferences.setMockInitialValues({});  // For testing/initialization
     final prefs = await SharedPreferences.getInstance();
     sl.registerSingleton<SharedPreferences>(prefs);
 

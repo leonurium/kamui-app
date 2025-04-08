@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:kamui_app/core/utils/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../domain/entities/ad.dart';
 
 class AdsOverlay extends StatefulWidget {
@@ -88,13 +89,29 @@ class _AdsOverlayState extends State<AdsOverlay> {
               id: ad.id,
               title: "Unable to load video",
               mediaType: "image",
-              mediaUrl: "https://picsum.photos/seed/vpn/1080/1920",
+              mediaUrl: "https://picsum.photos/400/600",
               clickUrl: ad.clickUrl,
               countdown: ad.countdown,
             );
           });
         }
       });
+  }
+
+  Future<void> _launchUrl() async {
+    final url = currentAd?.clickUrl;
+    if (url != null) {
+      try {
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          Logger.error("Could not launch $url");
+        }
+      } catch (e) {
+        Logger.error("Error launching URL: $e");
+      }
+    }
   }
 
   @override
@@ -109,77 +126,85 @@ class _AdsOverlayState extends State<AdsOverlay> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (ad.mediaType == 'video')
-              Stack(
-                alignment: Alignment.center,
+            GestureDetector(
+              onTap: _launchUrl,
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  if (_videoController?.value.isInitialized == true)
-                    Center(
-                      child: AspectRatio(
-                        aspectRatio: _videoController?.value.aspectRatio ?? 16 / 9,
-                        child: VideoPlayer(_videoController!),
-                      ),
-                    ),
-                  if (_isVideoLoading ||
-                      _videoController?.value.isBuffering == true)
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  if (ad.mediaType == 'video')
+                    Stack(
+                      alignment: Alignment.center,
                       children: [
-                        const CircularProgressIndicator(color: Colors.white),
-                        const SizedBox(height: 16),
-                        Text(
-                          _isVideoLoading ? 'Loading video...' : 'Buffering...',
-                          style: const TextStyle(color: Colors.white),
+                        if (_videoController?.value.isInitialized == true)
+                          Center(
+                            child: AspectRatio(
+                              aspectRatio: _videoController?.value.aspectRatio ?? 16 / 9,
+                              child: VideoPlayer(_videoController!),
+                            ),
+                          ),
+                        if (_isVideoLoading ||
+                            _videoController?.value.isBuffering == true)
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const CircularProgressIndicator(color: Colors.white),
+                              const SizedBox(height: 16),
+                              Text(
+                                _isVideoLoading ? 'Loading video...' : 'Buffering...',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ],
+                          ),
+                      ],
+                    )
+                  else if (ad.mediaType == 'image')
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.network(
+                          ad.mediaUrl,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  color: Colors.white,
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'Loading image...',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ],
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            Logger.error("Failed to load image: $error");
+                            return const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.error_outline,
+                                    color: Colors.white, size: 48),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Failed to load image',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ],
                     ),
                 ],
-              )
-            else if (ad.mediaType == 'image')
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Image.network(
-                    ad.mediaUrl,
-                    fit: BoxFit.contain,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(
-                            color: Colors.white,
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Loading image...',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      Logger.error("Failed to load image: $error");
-                      return const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.error_outline,
-                              color: Colors.white, size: 48),
-                          SizedBox(height: 8),
-                          Text(
-                            'Failed to load image',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
               ),
+            ),
             Positioned(
               top: 40,
               right: 16,
@@ -202,16 +227,48 @@ class _AdsOverlayState extends State<AdsOverlay> {
               ),
             ),
             Positioned(
+              bottom: 80,
+              right: 20,
+              child: ElevatedButton(
+                onPressed: _launchUrl,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4285F4), // Google Blue
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  elevation: 0,
+                  shadowColor: Colors.black.withOpacity(0.2),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Lihat',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+                    SizedBox(width: 3),
+                    Icon(
+                      Icons.arrow_forward,
+                      size: 12,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
               bottom: 20,
               left: 0,
               right: 0,
               child: Center(
                 child: GestureDetector(
-                  onTap: () {
-                    if (currentAd?.clickUrl != null) {
-                      Logger.info("Clicked on ad: ${currentAd?.clickUrl}");
-                    }
-                  },
+                  onTap: _launchUrl,
                   child: Text(
                     currentAd?.title ?? '',
                     style: const TextStyle(color: Colors.white, fontSize: 20),
