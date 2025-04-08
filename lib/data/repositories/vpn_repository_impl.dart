@@ -5,6 +5,7 @@ import '../models/main_response.dart';
 import '../../domain/entities/server.dart';
 import '../../domain/entities/session.dart';
 import '../../core/utils/device_info.dart';
+import '../../core/utils/logger.dart';
 
 class VpnRepositoryImpl implements VpnRepository {
   final ApiClient _apiClient;
@@ -30,7 +31,10 @@ class VpnRepositoryImpl implements VpnRepository {
   @override
   Future<Session> connect(int serverId) async {
     try {
+      Logger.info('VpnRepository: Connecting to VPN with serverId: $serverId');
       final deviceId = await DeviceInfoUtil.getDeviceId();
+      Logger.info('VpnRepository: Device ID: $deviceId');
+      
       final response = await _apiClient.dio.post(
         '/api/vpn/connect',
         data: {
@@ -39,17 +43,22 @@ class VpnRepositoryImpl implements VpnRepository {
         },
       );
       
+      Logger.info('VpnRepository: API response: ${response.data}');
+      
       final mainResponse = MainResponse<Session>.fromJson(
         response.data,
         (data) => Session.fromJson(data),
       );
       
       if (!mainResponse.success || mainResponse.data == null) {
+        Logger.error('VpnRepository: API error: ${mainResponse.message}');
         throw Exception(mainResponse.message);
       }
       
+      Logger.info('VpnRepository: Successfully connected to VPN');
       return mainResponse.data!;
     } on DioException catch (e) {
+      Logger.error('VpnRepository: Failed to connect to VPN: ${e.message}');
       throw Exception('Failed to connect: ${e.message}');
     }
   }

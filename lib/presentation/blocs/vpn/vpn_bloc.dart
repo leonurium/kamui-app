@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:kamui_app/core/utils/logger.dart';
 import '../../../domain/entities/server.dart';
 import '../../../domain/entities/session.dart';
 import '../../../domain/usecases/get_servers_usecase.dart';
@@ -41,11 +42,14 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
     ConnectVpnEvent event,
     Emitter<VpnState> emit,
   ) async {
+    Logger.info('VpnBloc: Connecting to VPN with serverId: ${event.serverId}');
     emit(VpnConnecting());
     try {
       final session = await _connectVpnUseCase.execute(event.serverId);
+      Logger.info('VpnBloc: Successfully connected to VPN. Session: $session');
       emit(VpnConnected(session));
     } catch (e) {
+      Logger.error('VpnBloc: Failed to connect to VPN: $e');
       emit(VpnError(e.toString()));
     }
   }
@@ -54,15 +58,19 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
     DisconnectVpnEvent event,
     Emitter<VpnState> emit,
   ) async {
+    Logger.info('VpnBloc: Disconnecting from VPN with sessionId: ${event.sessionId}');
     emit(VpnDisconnecting());
     try {
       final success = await _disconnectVpnUseCase.execute(event.sessionId);
       if (success) {
+        Logger.info('VpnBloc: Successfully disconnected from VPN');
         emit(VpnDisconnected());
       } else {
+        Logger.error('VpnBloc: Failed to disconnect from VPN');
         emit(VpnError('Failed to disconnect'));
       }
     } catch (e) {
+      Logger.error('VpnBloc: Error disconnecting from VPN: $e');
       emit(VpnError(e.toString()));
     }
   }

@@ -6,12 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'injection.dart' as di;
 import 'presentation/screens/splash_screen.dart';
+import 'core/utils/logger.dart';
 
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
     await dotenv.load();
     await di.init();
+    Logger.info('Main: Initializing app with VpnBloc: ${di.sl<VpnBloc>()}');
     runApp(const App());
   } catch (e) {
     debugPrint('Error during initialization: $e');
@@ -24,6 +26,10 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get a single instance of VpnBloc
+    final vpnBloc = di.sl<VpnBloc>();
+    Logger.info('Main: Using VpnBloc instance: $vpnBloc');
+
     return MaterialApp(
       title: 'Gama VPN',
       debugShowCheckedModeBanner: false,
@@ -33,10 +39,14 @@ class App extends StatelessWidget {
       home: MultiBlocProvider(
         providers: [
           BlocProvider(
-            create: (context) => di.sl<SplashBloc>(),
+            create: (context) {
+              final bloc = di.sl<SplashBloc>();
+              Logger.info('Main: Created SplashBloc: $bloc');
+              return bloc;
+            },
           ),
-          BlocProvider(
-            create: (context) => di.sl<VpnBloc>(),
+          BlocProvider.value(
+            value: vpnBloc,
           ),
         ],
         child: SplashScreen(),

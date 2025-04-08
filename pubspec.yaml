@@ -31,6 +31,7 @@ dependencies:
   avatar_glow: ^2.0.2
   circularbox: ^1.1.1+1
   flutter_vpn: ^0.13.0
+  wireguard_flutter: ^0.1.3
   roundcheckbox: ^2.0.5
   crypto: ^3.0.6
   device_info_plus: ^11.3.0

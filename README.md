@@ -175,6 +175,7 @@ lib/
 
 
 - ads should be have auto click, settings by cms
+- logo app is it already fix?
 
 ads
 - first load showing ads

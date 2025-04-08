@@ -21,12 +21,14 @@ class _SplashScreenState extends State<SplashScreen> {
     return BlocListener<SplashBloc, SplashState>(
       listener: (context, state) {
         if (state is SplashLoaded) {
+          final vpnBloc = context.read<VpnBloc>();
+          if (vpnBloc.isClosed) {
+            return;
+          }
+          
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (_) => BlocProvider(
-                create: (context) => context.read<VpnBloc>(),
-                child: HomePage(vpnBloc: context.read<VpnBloc>()),
-              ),
+              builder: (_) => HomePage(vpnBloc: vpnBloc),
             ),
           );
         } else if (state is SplashError) {

@@ -2,15 +2,16 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:avatar_glow/avatar_glow.dart';
+import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/presentation/screens/server_list_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_vpn/flutter_vpn.dart';
-import 'package:flutter_vpn/state.dart';
+import 'package:wireguard_flutter/wireguard_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
 import 'package:kamui_app/domain/entities/server.dart';
 import 'package:kamui_app/domain/entities/session.dart';
 import 'package:kamui_app/presentation/widgets/ads_overlay_widget.dart';
+import 'package:wireguard_flutter/wireguard_flutter_platform_interface.dart';
 
 import '../widgets/server_list_widget.dart';
 
@@ -24,61 +25,201 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _showingAds = true;
+  bool _showingAds = false;
+  bool _isFirstLaunch = true;
   Session? currentSession;
   Server? server;
   String connectionTime = '00.00.00';
   late String signature;
+  bool _isConnecting = false;
+  final WireGuardFlutterInterface _wireguard = WireGuardFlutter.instance;
+  StreamSubscription? _vpnStateSubscription;
+  VpnStage _currentStage = VpnStage.disconnected;
 
   @override
   void initState() {
     super.initState();
-    widget.vpnBloc.add(LoadServersEvent());
+    Logger.info('HomePage: Initializing with VpnBloc: ${widget.vpnBloc}');
+    
+    if (!widget.vpnBloc.isClosed) {
+      widget.vpnBloc.add(LoadServersEvent());
+    } else {
+      Logger.error('HomePage: VpnBloc is closed during initialization');
+    }
+    
+    _initWireguard();
+    // Show ads on first launch
+    if (_isFirstLaunch) {
+      setState(() {
+        _showingAds = true;
+      });
+    }
+  }
+
+  Future<void> _initWireguard() async {
+    await _wireguard.initialize(interfaceName: "wg0");
+    _vpnStateSubscription = _wireguard.vpnStageSnapshot.listen((stage) {
+      setState(() {
+        _currentStage = stage;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _vpnStateSubscription?.cancel();
+    if (_currentStage == VpnStage.connected) {
+      _disconnectWireguard();
+    }
+    super.dispose();
   }
 
   void _handleVpnConnection() {
-    if (server == null) return;
-    
-    widget.vpnBloc.add(ConnectVpnEvent(server!.id));
-    FlutterVpn.connectIkev2EAP(
-      server: server!.apiUrl,
-      username: 'vpn_username',
-      password: 'vpn_password',
-      name: server!.city,
-    );
-  }
-
-  // void _handleVpnDisconnection() {
-  //   if (currentSession != null) {
-  //     widget.vpnBloc.add(DisconnectVpnEvent(currentSession!.id));
-  //     FlutterVpn.disconnect();
-  //   }
-  // }
-
-  Stream<String> vpnConnectionDuration() async* {
     if (server == null) {
-      yield 'Please select a server!';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please select a server first')),
+      );
       return;
     }
     
-    yield 'Connecting...';
+    if (!mounted) return;
+
+    Logger.info('on _handleVpnConnection');
     
-    try {
-      // Trigger VPN connection
-      _handleVpnConnection();
-      
-      // Start duration timer
-      DateTime startTime = DateTime.now();
-      
-      while (currentSession != null) {
-        Duration duration = DateTime.now().difference(startTime);
-        yield "${duration.inHours.toString().padLeft(2, '0')}.${(duration.inMinutes % 60).toString().padLeft(2, '0')}.${(duration.inSeconds % 60).toString().padLeft(2, '0')}";
-        await Future.delayed(Duration(seconds: 1));
+    setState(() {
+      _showingAds = true;
+      _isConnecting = true;
+    });
+  }
+
+  void _handleVpnDisconnection() {
+    if (currentSession == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No active connection to disconnect')),
+      );
+      return;
+    }
+    
+    if (!mounted) return;
+    
+    setState(() {
+      _showingAds = true;
+      _isConnecting = false;
+    });
+  }
+
+  void _onAdsClosed() {
+    setState(() {
+      _showingAds = false;
+      _isFirstLaunch = false;
+    });
+    
+    if (!mounted) return;
+
+    Logger.info('HomePage: Ads closed, current VpnBloc: ${widget.vpnBloc}');
+    
+    // Check if bloc is closed
+    if (widget.vpnBloc.isClosed) {
+      Logger.error('HomePage: VpnBloc is closed, cannot add events');
+      return;
+    }
+    
+    if (_isConnecting) {
+      if (server != null) {
+        Logger.info('HomePage: Connecting to VPN with server: $server');
+        // Show loading indicator
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text('Connecting to VPN...'),
+              ],
+            ),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        
+        // Add connect event to bloc
+        widget.vpnBloc.add(ConnectVpnEvent(server!.id));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please select a server first')),
+        );
       }
+    } else {
+      if (currentSession != null) {
+        Logger.info('HomePage: Disconnecting from VPN with session: $currentSession');
+        // Show loading indicator
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text('Disconnecting from VPN...'),
+              ],
+            ),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        
+        // Add disconnect event to bloc
+        widget.vpnBloc.add(DisconnectVpnEvent(currentSession!.id));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No active connection to disconnect')),
+        );
+      }
+    }
+  }
+
+  Future<void> _connectWireguard(Session session) async {
+    try {
+      final config = '''
+[Interface]
+PrivateKey = ${session.clientPrivateKey}
+Address = ${session.serverAddress}
+DNS = ${session.dnsServer}
+
+[Peer]
+PublicKey = ${session.serverPublicKey}
+AllowedIPs = ${session.allowedIps}
+Endpoint = ${session.serverEndpoint}:${session.serverPort}
+''';
+
+      await _wireguard.startVpn(
+        serverAddress: session.serverEndpoint,
+        wgQuickConfig: config,
+        providerBundleIdentifier: 'com.gamavpn.app',
+      );
       
-      yield '00.00.00';
+      setState(() {
+        _currentStage = VpnStage.connected;
+      });
     } catch (e) {
-      yield 'Error: ${e.toString()}';
+      Logger.error('WireGuard connection error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to connect to VPN: $e')),
+      );
+      setState(() {
+        _currentStage = VpnStage.disconnected;
+      });
+    }
+  }
+
+  Future<void> _disconnectWireguard() async {
+    try {
+      await _wireguard.stopVpn();
+      setState(() {
+        _currentStage = VpnStage.disconnected;
+      });
+    } catch (e) {
+      Logger.error('WireGuard disconnection error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to disconnect from VPN: $e')),
+      );
     }
   }
 
@@ -87,255 +228,263 @@ class _HomePageState extends State<HomePage> {
     return Stack(
       children: [
         BlocListener<VpnBloc, VpnState>(
-      bloc: widget.vpnBloc,
-      listener: (context, state) {
-        if (state is VpnConnected) {
-          setState(() {
-            currentSession = state.session;
-          });
-        } else if (state is VpnDisconnected) {
-          setState(() {
-            currentSession = null;
-          });
-        }
-      },
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          centerTitle: true,
-          title: Text(
-            'Gama VPN',
-            style: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w600),
-          ),
-          leading: Image.asset(
-            'assets/logo.png',
-            width: 35,
-            height: 35,
-          ),
-        ),
-        body: StreamBuilder<FlutterVpnState>(
-            stream: FlutterVpn.onStateChanged,
-            builder: (context, snapshot) {
-              final _flutterVpnState = snapshot.data ?? FlutterVpnState.disconnected;
-              return Stack(
-                children: [
-                  Positioned(
-                      top: 50,
-                      child: Opacity(
-                          opacity: .1,
-                          child: Image.asset(
-                            'assets/background.png',
-                            fit: BoxFit.fill,
-                            height: MediaQuery.of(context).size.height / 1.5,
-                          ))),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: Column(
-                      children: [
-                        SizedBox(height: 25),
-                        Center(
-                            child: Text(
-                          '${connectionState(state: _flutterVpnState)}',
+          bloc: widget.vpnBloc,
+          listener: (context, state) {
+            if (state is VpnConnected) {
+              setState(() {
+                currentSession = state.session;
+                _currentStage = VpnStage.connecting;
+              });
+              // Start WireGuard connection after successful API call
+              _connectWireguard(state.session);
+            } else if (state is VpnDisconnected) {
+              setState(() {
+                currentSession = null;
+                _currentStage = VpnStage.disconnecting;
+              });
+              _disconnectWireguard();
+            } else if (state is VpnError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
+              setState(() {
+                _currentStage = VpnStage.disconnected;
+              });
+            }
+          },
+          child: Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            appBar: AppBar(
+              centerTitle: true,
+              title: Text(
+                'Gama VPN',
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w600),
+              ),
+              leading: Image.asset(
+                'assets/logo.png',
+                width: 35,
+                height: 35,
+              ),
+            ),
+            body: Stack(
+              children: [
+                Positioned(
+                  top: 50,
+                  child: Opacity(
+                    opacity: .1,
+                    child: Image.asset(
+                      'assets/background.png',
+                      fit: BoxFit.fill,
+                      height: MediaQuery.of(context).size.height / 1.5,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: Column(
+                    children: [
+                      SizedBox(height: 25),
+                      Center(
+                        child: Text(
+                          '${connectionState(state: _currentStage)}',
                           style: Theme.of(context).textTheme.bodyLarge,
-                        )),
-                        SizedBox(height: 8),
-                        FutureBuilder<List<NetworkInterface>>(
-                            future: NetworkInterface.list(),
-                            builder: (context, snapshot) {
-                              final data = snapshot.data ?? [];
-                              final ip =
-                                  data.isEmpty ? '0.0.0.0' : data.first.addresses.first.address;
-                              return Center(
-                                  child: Text(
-                                ip,
-                                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                                    color: connectionColorState(state: _flutterVpnState),
-                                    fontWeight: FontWeight.w600),
-                              ));
-                            }),
-                        SizedBox(
-                          height: 15,
                         ),
-                        Center(
-                          child: InkWell(
-                            onTap: () {
-                              vpnConnectionDuration().listen((event) {
-                                print(event);
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(90),
-                            child: AvatarGlow(
-                              glowColor: _flutterVpnState != FlutterVpnState.connected
-                                  ? Colors.transparent
-                                  : connectionColorState(state: _flutterVpnState),
-                              endRadius: 100.0,
-                              duration: Duration(milliseconds: 2000),
-                              repeat: _flutterVpnState != FlutterVpnState.connected ? false : true,
-                              showTwoGlows: true,
-                              repeatPauseDuration: Duration(milliseconds: 100),
-                              shape: BoxShape.circle,
-                              child: Material(
-                                elevation: 0,
-                                shape: CircleBorder(),
-                                color: connectionColorState(state: _flutterVpnState),
-                                child: SizedBox(
-                                  height: 150,
-                                  width: 150,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.power_settings_new,
-                                        color: Colors.white,
-                                        size: 50,
-                                      ),
-                                      SizedBox(height: 10),
-                                      Text(
-                                        '${connectionButtonState(state: _flutterVpnState)}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium!
-                                            .copyWith(color: Colors.white),
-                                      )
-                                    ],
-                                  ),
+                      ),
+                      SizedBox(height: 8),
+                      FutureBuilder<List<NetworkInterface>>(
+                        future: NetworkInterface.list(),
+                        builder: (context, snapshot) {
+                          final data = snapshot.data ?? [];
+                          final ip = data.isEmpty ? '0.0.0.0' : data.first.addresses.first.address;
+                          return Center(
+                            child: Text(
+                              ip,
+                              style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                                color: connectionColorState(state: _currentStage),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      SizedBox(height: 15),
+                      Center(
+                        child: InkWell(
+                          onTap: () {
+                            if (_currentStage == VpnStage.connected) {
+                              _handleVpnDisconnection();
+                            } else {
+                              _handleVpnConnection();
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(90),
+                          child: AvatarGlow(
+                            glowColor: _currentStage != VpnStage.connected
+                                ? Colors.transparent
+                                : connectionColorState(state: _currentStage),
+                            endRadius: 100.0,
+                            duration: Duration(milliseconds: 2000),
+                            repeat: _currentStage != VpnStage.connected ? false : true,
+                            showTwoGlows: true,
+                            repeatPauseDuration: Duration(milliseconds: 100),
+                            shape: BoxShape.circle,
+                            child: Material(
+                              elevation: 0,
+                              shape: CircleBorder(),
+                              color: connectionColorState(state: _currentStage),
+                              child: SizedBox(
+                                height: 150,
+                                width: 150,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.power_settings_new,
+                                      color: Colors.white,
+                                      size: 50,
+                                    ),
+                                    SizedBox(height: 10),
+                                    Text(
+                                      '${connectionButtonState(state: _currentStage)}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium!
+                                          .copyWith(color: Colors.white),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
                           ),
                         ),
-                        SizedBox(
-                          height: 20,
-                        ),
-                        BlocBuilder<VpnBloc, VpnState>(
-                          bloc: widget.vpnBloc,
-                          builder: (context, state) {
-                            String duration = '00.00.00';
-                            if (state is VpnConnected) {
-                              final startTime = DateTime.parse(state.session.startTime);
-                              final now = DateTime.now();
-                              final diff = now.difference(startTime);
-                              duration = "${diff.inHours.toString().padLeft(2, '0')}.${(diff.inMinutes % 60).toString().padLeft(2, '0')}.${(diff.inSeconds % 60).toString().padLeft(2, '0')}";
-                            }
-                            return Center(
-                              child: Text(
-                                duration,
-                                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: Color.fromRGBO(37, 112, 252, 1)),
+                      ),
+                      SizedBox(height: 20),
+                      BlocBuilder<VpnBloc, VpnState>(
+                        bloc: widget.vpnBloc,
+                        builder: (context, state) {
+                          String duration = '00.00.00';
+                          if (state is VpnConnected) {
+                            final startTime = DateTime.parse(state.session.startTime);
+                            final now = DateTime.now();
+                            final diff = now.difference(startTime);
+                            duration = "${diff.inHours.toString().padLeft(2, '0')}.${(diff.inMinutes % 60).toString().padLeft(2, '0')}.${(diff.inSeconds % 60).toString().padLeft(2, '0')}";
+                          }
+                          return Center(
+                            child: Text(
+                              duration,
+                              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: Color.fromRGBO(37, 112, 252, 1),
                               ),
-                            );
-                          },
-                        ),
-                        SizedBox(height: 25),
-                        ServerItemWidget(
-                          flagAsset: 'assets/logo.png',
-                          label: server?.country ?? 'No sever selected',
-                          icon: Icons.arrow_forward_ios,
-                          onTap: () async {
-                            final res = await Navigator.of(context)
-                                .push(MaterialPageRoute(builder: (context) {
-                              return ServerListPage();
-                            }));
+                            ),
+                          );
+                        },
+                      ),
+                      SizedBox(height: 25),
+                      ServerItemWidget(
+                        flagAsset: 'assets/logo.png',
+                        label: server?.country ?? 'No sever selected',
+                        icon: Icons.arrow_forward_ios,
+                        onTap: () async {
+                          final res = await Navigator.of(context)
+                              .push(MaterialPageRoute(builder: (context) {
+                            return ServerListPage();
+                          }));
 
-                            if (res != null) {
-                              setState(() {
-                                server = res;
-                              });
-
-                              vpnConnectionDuration().listen((event) {
-                                print(event);
-                              });
-                            }
-                          },
+                          if (res != null) {
+                            setState(() {
+                              server = res;
+                            });
+                          }
+                        },
+                      ),
+                      Spacer(),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 15,
+                            horizontal: MediaQuery.of(context).size.width / 4.5,
+                          ),
+                          backgroundColor: Color.fromRGBO(37, 112, 252, 1),
                         ),
-                        Spacer(),
-                        TextButton.icon(
-                          style: TextButton.styleFrom(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: EdgeInsets.symmetric(
-                                vertical: 15, horizontal: MediaQuery.of(context).size.width / 4.5),
-                            backgroundColor: Color.fromRGBO(37, 112, 252, 1),
-                          ),
-                          onPressed: () {},
-                          icon: Icon(
-                            Icons.star,
-                            color: Colors.white,
-                          ),
-                          label: Text(
-                            'Get Premium',
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelLarge!
-                                .copyWith(color: Colors.white),
-                          ),
+                        onPressed: () {},
+                        icon: Icon(
+                          Icons.star,
+                          color: Colors.white,
                         ),
-                        SizedBox(height: 35),
-                      ],
-                    ),
+                        label: Text(
+                          'Get Premium',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelLarge!
+                              .copyWith(color: Colors.white),
+                        ),
+                      ),
+                      SizedBox(height: 35),
+                    ],
                   ),
-                ],
-              );
-            }))),
-            if (_showingAds)
-              AdsOverlay(
-                onClose: () {
-                  setState(() {
-                    _showingAds = false;
-                  });
-                },
-              ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_showingAds)
+          AdsOverlay(
+            onClose: _onAdsClosed,
+          ),
       ],
     );
   }
 
-  String connectionState({FlutterVpnState? state}) {
+  String connectionState({VpnStage? state}) {
     switch (state) {
-      case FlutterVpnState.connected:
+      case VpnStage.connected:
         return 'You are connected';
-      case FlutterVpnState.connecting:
+      case VpnStage.connecting:
         return 'VPN is connecting';
-      case FlutterVpnState.disconnected:
+      case VpnStage.disconnected:
         return 'You are disconnected';
-      case FlutterVpnState.disconnecting:
+      case VpnStage.disconnecting:
         return 'VPN is disconnecting';
-      case FlutterVpnState.error:
+      case VpnStage.denied:
         return 'Error getting status';
       default:
         return 'Getting connection status';
     }
   }
 
-  String connectionButtonState({FlutterVpnState? state}) {
+  String connectionButtonState({VpnStage? state}) {
     switch (state) {
-      case FlutterVpnState.connected:
+      case VpnStage.connected:
         return 'Connected';
-      case FlutterVpnState.connecting:
+      case VpnStage.connecting:
         return 'Connecting';
-      case FlutterVpnState.disconnected:
+      case VpnStage.disconnected:
         return 'Disconnected';
-      case FlutterVpnState.disconnecting:
+      case VpnStage.disconnecting:
         return 'Disconnecting';
-      case FlutterVpnState.error:
-        return 'Error';
+      case VpnStage.denied:
+        return 'Denied';
       default:
         return 'Disconnected';
     }
   }
 
-  Color connectionColorState({FlutterVpnState? state}) {
+  Color connectionColorState({VpnStage? state}) {
     switch (state) {
-      case FlutterVpnState.connected:
+      case VpnStage.connected:
         return Color.fromRGBO(37, 112, 252, 1);
-      case FlutterVpnState.connecting:
+      case VpnStage.connecting:
         return Color.fromRGBO(87, 141, 240, 1);
-      case FlutterVpnState.disconnected:
-      case FlutterVpnState.disconnecting:
+      case VpnStage.disconnected:
+      case VpnStage.disconnecting:
         return Colors.grey;
-
-      default:
+      case VpnStage.denied:
         return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 }
