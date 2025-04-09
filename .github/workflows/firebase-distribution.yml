@@ -24,7 +24,7 @@ jobs:
             exit 1
           fi
 
-  build-and-deploy:
+  build-android:
     needs: validate-version
     runs-on: macos-latest
     steps:
@@ -65,13 +65,63 @@ jobs:
           cd ..
       
       - name: Build Android APK
-        run: flutter build apk --debug
+        run: |
+          flutter build apk --debug --verbose
+          if [ $? -ne 0 ]; then
+            echo "Build failed, showing stacktrace..."
+            cd android
+            ./gradlew assembleDebug --stacktrace --info
+            exit 1
+          fi
       
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
+      
+      - name: Firebase App Distribution - Android
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          groups: qa-testers
+          file: build/app/outputs/flutter-apk/app-debug.apk
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          releaseNotes: ${{ env.RELEASE_NOTES }}
+
+  build-ios:
+    needs: validate-version
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+      
+      - name: Create .env file
+        run: |
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" > .env
+          echo "BASE_URL=${{ secrets.BASE_URL }}" >> .env
+          echo "API_KEY=${{ secrets.API_KEY }}" >> .env
+          echo "NETWORK_LOGGER=false" >> .env
+      
+      - name: Install dependencies
+        run: flutter pub get
+      
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          git fetch --prune --unshallow || true
+          COMMITS=$(git log --pretty=format:"- %s" -n 5)
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "Release ${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "Recent changes:" >> $GITHUB_ENV
+          echo "$COMMITS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
       
       - name: Setup iOS build environment
         run: |
@@ -82,22 +132,19 @@ jobs:
       
       - name: Build iOS IPA
         run: |
-          flutter build ipa --debug --no-codesign
+          flutter build ipa --debug --no-codesign --verbose
+          if [ $? -ne 0 ]; then
+            echo "Build failed, showing stacktrace..."
+            cd ios
+            xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Debug -sdk iphoneos -verbose
+            exit 1
+          fi
       
       - name: Upload iOS IPA
         uses: actions/upload-artifact@v4
         with:
           name: debug-ipa
           path: build/ios/ipa/*.ipa
-      
-      - name: Firebase App Distribution - Android
-        uses: wzieba/Firebase-Distribution-Github-Action@v1
-        with:
-          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
-          groups: qa-testers
-          file: build/app/outputs/flutter-apk/app-debug.apk
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          releaseNotes: ${{ env.RELEASE_NOTES }}
       
       - name: Firebase App Distribution - iOS
         uses: wzieba/Firebase-Distribution-Github-Action@v1
