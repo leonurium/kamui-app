@@ -58,6 +58,18 @@ jobs:
           echo "$COMMITS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
       
+      - name: Setup Android Build Environment
+        run: |
+          cd android
+          # Create gradlew if it doesn't exist
+          if [ ! -f "gradlew" ]; then
+            echo "Creating gradlew..."
+            gradle wrapper
+          fi
+          # Make gradlew executable
+          chmod +x gradlew
+          cd ..
+      
       - name: Build Android APK
         run: |
           cd android
@@ -137,17 +149,41 @@ jobs:
             exit 1
           fi
       
+      - name: Debug Build Output
+        run: |
+          echo "=== Debugging Build Output ==="
+          echo "Current directory: $(pwd)"
+          echo "=== Contents of build directory ==="
+          ls -la build/
+          echo "=== Contents of build/ios directory ==="
+          ls -la build/ios/
+          echo "=== Contents of build/ios/ipa directory ==="
+          ls -la build/ios/ipa/ || echo "ipa directory not found"
+          echo "=== Contents of ios directory ==="
+          ls -la ios/
+          echo "=== Contents of ios/Runner.xcworkspace ==="
+          ls -la ios/Runner.xcworkspace/
+      
+      - name: Verify IPA Exists
+        run: |
+          if [ ! -f "build/ios/ipa/*.ipa" ]; then
+            echo "Error: IPA file not found at build/ios/ipa/Runner.ipa"
+            echo "Searching for IPA files in other locations..."
+            find . -name "*.ipa" -type f
+            exit 1
+          fi
+      
       - name: Upload iOS IPA
         uses: actions/upload-artifact@v4
         with:
           name: debug-ipa
-          path: build/ios/ipa/Runner.ipa
+          path: build/ios/ipa/*.ipa
       
       - name: Firebase App Distribution - iOS
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_IOS_APP_ID }}
           groups: qa-testers
-          file: build/ios/ipa/Runner.ipa
+          file: build/ios/ipa/*.ipa
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           releaseNotes: ${{ env.RELEASE_NOTES }} 
