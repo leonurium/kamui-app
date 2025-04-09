@@ -207,7 +207,10 @@ class _HomePageState extends State<HomePage> {
         );
         
         // Add disconnect event to bloc
-        widget.vpnBloc.add(DisconnectVpnEvent(currentSession!.sessionId));
+        widget.vpnBloc.add(DisconnectVpnEvent(
+          sessionId: currentSession!.sessionId,
+          serverLocation: currentSession!.serverId.toString(),
+          protocol: currentSession!.endpoint));
       } else {
         // ScaffoldMessenger.of(context).showSnackBar(
         //   SnackBar(content: Text('No active connection to disconnect')),
@@ -341,7 +344,10 @@ Endpoint = ${session.endpoint}:${session.listenPort}
           });
           
           // Add disconnect event to bloc with session ID
-          widget.vpnBloc.add(DisconnectVpnEvent(session.sessionId));
+          widget.vpnBloc.add(DisconnectVpnEvent(
+            sessionId: session.sessionId,
+            serverLocation: session.serverId.toString(),
+            protocol: session.endpoint));
           
           // Clear session data from SharedPreferences
           await _prefs.remove('current_session');

@@ -20,9 +20,15 @@ class ConnectVpnEvent extends VpnEvent {
 
 class DisconnectVpnEvent extends VpnEvent {
   final String sessionId;
+  final String serverLocation;
+  final String protocol;
 
-  const DisconnectVpnEvent(this.sessionId);
+  const DisconnectVpnEvent({
+    required this.sessionId,
+    required this.serverLocation,
+    required this.protocol,
+  });
 
   @override
-  List<Object> get props => [sessionId];
+  List<Object> get props => [sessionId, serverLocation, protocol];
 }

@@ -5,6 +5,8 @@ import 'package:kamui_app/presentation/blocs/onboarding/onboarding_bloc.dart';
 import 'package:kamui_app/core/utils/custom_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:kamui_app/core/services/analytics_service.dart';
 import 'injection.dart' as di;
 import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/onboarding_screen.dart';
@@ -14,10 +16,26 @@ void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
     await dotenv.load();
+    await Firebase.initializeApp();
     await di.init();
+    
+    // Set initial user properties
+    await AnalyticsService.setUserProperties(
+      subscriptionStatus: 'free',
+      connectionType: 'mobile',
+      deviceType: 'android', // You might want to detect this dynamically
+    );
+    
     Logger.info('Main: Initializing app with VpnBloc: ${di.sl<VpnBloc>()}');
     runApp(const App());
-  } catch (e) {
+  } catch (e, stackTrace) {
+    // Log the crash
+    AnalyticsService.logAppCrash(
+      error: e.toString(),
+      stackTrace: stackTrace.toString(),
+      screenName: 'main',
+    );
+    
     debugPrint('Error during initialization: $e');
     runApp(ErrorApp(error: e.toString()));
   }
@@ -38,6 +56,7 @@ class App extends StatelessWidget {
       theme: customLightTheme(context),
       darkTheme: customDarkTheme(context),
       themeMode: ThemeMode.system,
+      navigatorObservers: [AnalyticsService.observer],
       home: MultiBlocProvider(
         providers: [
           BlocProvider(
@@ -61,8 +80,10 @@ class App extends StatelessWidget {
         child: BlocBuilder<OnboardingBloc, OnboardingState>(
           builder: (context, state) {
             if (state is OnboardingNotCompleted) {
+              AnalyticsService.setCurrentScreen('OnboardingScreen');
               return OnboardingScreen();
             }
+            AnalyticsService.setCurrentScreen('SplashScreen');
             return SplashScreen();
           },
         ),

@@ -1,0 +1,86 @@
+name: Firebase App Distribution
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  validate-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Validate version format
+        run: |
+          if [[ ! ${{ github.ref_name }} =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Tag must follow semantic versioning format (vX.Y.Z)"
+            exit 1
+          fi
+
+  build-and-deploy:
+    needs: validate-version
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+      
+      - name: Install dependencies
+        run: flutter pub get
+      
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          git fetch --prune --unshallow || true
+          COMMITS=$(git log --pretty=format:"- %s" -n 5)
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "Release ${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "Recent changes:" >> $GITHUB_ENV
+          echo "$COMMITS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+      
+      - name: Build Android APK
+        run: flutter build apk --release
+      
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+      
+      - name: Build iOS IPA
+        run: |
+          cd ios
+          pod install
+          cd ..
+          flutter build ipa --release
+      
+      - name: Upload iOS IPA
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-ipa
+          path: build/ios/ipa/*.ipa
+      
+      - name: Firebase App Distribution - Android
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          groups: qa-testers
+          file: build/app/outputs/flutter-apk/app-release.apk
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          releaseNotes: ${{ env.RELEASE_NOTES }}
+      
+      - name: Firebase App Distribution - iOS
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_IOS_APP_ID }}
+          groups: qa-testers
+          file: build/ios/ipa/*.ipa
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          releaseNotes: ${{ env.RELEASE_NOTES }} 
