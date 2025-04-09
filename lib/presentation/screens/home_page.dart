@@ -226,11 +226,12 @@ class _HomePageState extends State<HomePage> {
 [Interface]
 PrivateKey = ${session.privateKey}
 Address = ${session.ipAddress}
-DNS = 1.1.1.1, 8.8.8.8
+DNS = 1.1.1.1, 8.8.8.8, 10.0.0.1
 
 [Peer]
 PublicKey = ${session.publicKey}
-AllowedIPs = 0.0.0.0/0
+AllowedIPs = 0.0.0.0/0, ::/0
+PersistentKeepalive = 0
 Endpoint = ${session.endpoint}:${session.listenPort}
 ''';
 
@@ -249,9 +250,11 @@ Endpoint = ${session.endpoint}:${session.listenPort}
       Logger.info('WireGuard VPN started successfully');
     } catch (e) {
       Logger.error('WireGuard connection error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to connect to VPN: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to connect to VPN: $e')),
+        );
+      }
       setState(() {
         _currentStage = VpnStage.disconnected;
       });

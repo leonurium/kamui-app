@@ -73,8 +73,15 @@ class _AdsOverlayState extends State<AdsOverlay> {
     });
 
     try {
-      _videoController = VideoPlayerController.networkUrl(Uri.parse(ad.mediaUrl));
-      
+      final uri = Uri.parse(ad.mediaUrl);
+      if (!uri.isAbsolute) {
+        throw Exception('Invalid video URL');
+      }
+
+      // Dispose any existing controller
+      await _videoController?.dispose();
+      _videoController = VideoPlayerController.networkUrl(uri);
+
       await _videoController?.initialize().timeout(
         const Duration(seconds: 10),
         onTimeout: () {
@@ -249,7 +256,7 @@ class _AdsOverlayState extends State<AdsOverlay> {
                     borderRadius: BorderRadius.circular(3),
                   ),
                   elevation: 0,
-                  shadowColor: Colors.black.withOpacity(0.2),
+                  shadowColor: Colors.black.withValues(alpha: .2),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,

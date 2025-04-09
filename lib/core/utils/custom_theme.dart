@@ -21,7 +21,7 @@ ThemeData customLightTheme(
       cardColor: Color.fromRGBO(239, 242, 248, 1),
       iconTheme: IconThemeData(color: Colors.black),
       tabBarTheme: TabBarTheme(
-        unselectedLabelColor: Colors.black.withOpacity(.5),
+        unselectedLabelColor: Colors.black.withValues(alpha: .5),
       ),
       appBarTheme: AppBarTheme(elevation: 0, color: Colors.white, iconTheme: IconThemeData(color: Colors.black)),
       textTheme: Typography.material2018(platform: defaultTargetPlatform).white.copyWith(
@@ -61,7 +61,7 @@ ThemeData customDarkTheme(
       fontFamily: GoogleFonts.montserrat().fontFamily,
       cardColor: Color.fromRGBO(31, 31, 31, 1),
       tabBarTheme: TabBarTheme(
-        unselectedLabelColor: Colors.white.withOpacity(.7),
+        unselectedLabelColor: Colors.white.withValues(alpha: .7),
       ),
       appBarTheme: AppBarTheme(elevation: 0, color: Colors.black,iconTheme: IconThemeData(color: Colors.white) ),
       textTheme: Typography.material2018(platform: defaultTargetPlatform).white.copyWith(
@@ -80,6 +80,6 @@ ThemeData customDarkTheme(
             labelLarge: TextStyle(color: Colors.white, fontSize: 16),
           ),
       iconTheme: IconThemeData(color: Colors.white),
-      dividerColor: Colors.white.withOpacity(.6),
+      dividerColor: Colors.white.withValues(alpha: .6),
       textSelectionTheme: TextSelectionThemeData(cursorColor: Color.fromRGBO(105, 73, 199, 1)));
 }
