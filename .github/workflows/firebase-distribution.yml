@@ -58,23 +58,8 @@ jobs:
           echo "$COMMITS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
       
-      - name: Setup Android Build Environment
-        run: |
-          cd android
-          # Create gradlew if it doesn't exist
-          if [ ! -f "gradlew" ]; then
-            echo "Creating gradlew..."
-            gradle wrapper --gradle-version 8.2 --stacktrace
-          fi
-          # Make gradlew executable
-          chmod +x gradlew
-          cd ..
-      
       - name: Build Android APK
         run: |
-          cd android
-          ./gradlew clean
-          cd ..
           flutter build apk --debug
           if [ $? -ne 0 ]; then
             echo "Build failed, showing stacktrace..."
@@ -107,8 +92,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'master'
-          channel: 'master'
+          flutter-version: '3.x'
+          channel: 'stable'
       
       - name: Create .env file
         run: |
@@ -153,6 +138,7 @@ jobs:
         run: |
           echo "=== Debugging Build Output ==="
           echo "Current directory: $(pwd)"
+          ls -la $(pwd)
           echo "=== Contents of build directory ==="
           ls -la build/
           echo "=== Contents of build/ios directory ==="
