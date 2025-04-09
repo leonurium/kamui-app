@@ -4,11 +4,13 @@ import '../../domain/repositories/premium_repository.dart';
 import '../models/main_response.dart';
 import '../../domain/entities/package.dart';
 import '../../domain/entities/payment_history.dart';
+import 'premium_repository_mock.dart';
 
 class PremiumRepositoryImpl implements PremiumRepository {
   final ApiClient _apiClient;
+  final PremiumRepositoryMock _mockRepository;
 
-  PremiumRepositoryImpl(this._apiClient);
+  PremiumRepositoryImpl(this._apiClient) : _mockRepository = PremiumRepositoryMock();
 
   @override
   Future<List<Package>> getPackages() async {
@@ -22,6 +24,13 @@ class PremiumRepositoryImpl implements PremiumRepository {
       
       return mainResponse.data?.cast<Package>() ?? [];
     } on DioException catch (e) {
+      // If server is down or timeout, use mock data
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        return _mockRepository.getPackages();
+      }
       throw Exception('Failed to get packages: ${e.message}');
     }
   }
@@ -41,6 +50,13 @@ class PremiumRepositoryImpl implements PremiumRepository {
       final mainResponse = MainResponse.fromJson(response.data, null);
       return mainResponse.success;
     } on DioException catch (e) {
+      // If server is down or timeout, use mock data
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        return _mockRepository.purchasePackage(packageId, purchaseToken, platform);
+      }
       throw Exception('Failed to purchase package: ${e.message}');
     }
   }
@@ -57,6 +73,13 @@ class PremiumRepositoryImpl implements PremiumRepository {
       
       return mainResponse.data?.cast<PaymentHistory>() ?? [];
     } on DioException catch (e) {
+      // If server is down or timeout, use mock data
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        return _mockRepository.getPaymentHistories();
+      }
       throw Exception('Failed to get payment histories: ${e.message}');
     }
   }

@@ -65,6 +65,12 @@ class ApiClient {
           } else {
             if(Constants.networkLogger) {
               Logger.error('[ERROR] ${e.message}');
+              Logger.error('[ERROR TYPE] ${e.type}');
+              if (e.type == DioExceptionType.connectionTimeout ||
+                  e.type == DioExceptionType.receiveTimeout ||
+                  e.type == DioExceptionType.sendTimeout) {
+                Logger.error('[ERROR] Server timeout - Using mock data');
+              }
             }
             return handler.next(e);
           }

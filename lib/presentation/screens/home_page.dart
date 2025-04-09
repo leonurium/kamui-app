@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/presentation/screens/server_list_page.dart';
+import 'package:kamui_app/presentation/screens/premium_page.dart';
 import 'package:flutter/material.dart';
 import 'package:wireguard_flutter/wireguard_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -215,7 +216,33 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<bool> _checkVpnPermission() async {
+    try {
+      // We can't directly check VPN permission status, but we can try to initialize
+      // which will fail if permission is not granted
+      await _wireguard.initialize(interfaceName: "wg0");
+      return true;
+    } catch (e) {
+      Logger.error('Error checking VPN permission: $e');
+      return false;
+    }
+  }
+
   Future<void> _connectWireguard(Session session) async {
+    // Check VPN permission first
+    final hasPermission = await _checkVpnPermission();
+    if (!hasPermission) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('VPN permission is required to connect. Please grant permission when prompted.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
     try {
       // Save session data to SharedPreferences
       final sessionJson = jsonEncode(session.toJson());
@@ -237,6 +264,22 @@ Endpoint = ${session.endpoint}:${session.listenPort}
 
       Logger.info('Starting WireGuard VPN with config: $config');
       
+      // Show loading indicator while waiting for permission
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text('Requesting VPN permission...'),
+              ],
+            ),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      
       await _wireguard.startVpn(
         serverAddress: session.endpoint,
         wgQuickConfig: config,
@@ -251,9 +294,27 @@ Endpoint = ${session.endpoint}:${session.listenPort}
     } catch (e) {
       Logger.error('WireGuard connection error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to connect to VPN: $e')),
-        );
+        // Check if error is due to permission denial
+        if (e.toString().contains('permission') || e.toString().contains('denied')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('VPN permission was denied. Please enable VPN access in system settings.'),
+              action: SnackBarAction(
+                label: 'Settings',
+                onPressed: () {
+                  // Open system settings
+                  // Note: You'll need to implement platform-specific code to open settings
+                  // For Android: url_launcher can be used
+                  // For iOS: You can't programmatically open VPN settings
+                },
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to connect to VPN: $e')),
+          );
+        }
       }
       setState(() {
         _currentStage = VpnStage.disconnected;
@@ -500,7 +561,13 @@ Endpoint = ${session.endpoint}:${session.listenPort}
                           ),
                           backgroundColor: Color.fromRGBO(37, 112, 252, 1),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const PremiumPage(),
+                            ),
+                          );
+                        },
                         icon: Icon(
                           Icons.star,
                           color: Colors.white,

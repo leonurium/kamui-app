@@ -3,16 +3,20 @@ class Package {
   final String name;
   final String description;
   final double price;
-  final String duration;
   final String currency;
+  final int duration; // in days
+  final List<String> features;
+  final bool isPopular;
 
   Package({
     required this.id,
     required this.name,
     required this.description,
     required this.price,
-    required this.duration,
     required this.currency,
+    required this.duration,
+    required this.features,
+    this.isPopular = false,
   });
 
   factory Package.fromJson(Map<String, dynamic> json) {
@@ -21,8 +25,23 @@ class Package {
       name: json['name'],
       description: json['description'],
       price: json['price'].toDouble(),
-      duration: json['duration'],
       currency: json['currency'],
+      duration: json['duration'],
+      features: List<String>.from(json['features']),
+      isPopular: json['is_popular'] ?? false,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'price': price,
+      'currency': currency,
+      'duration': duration,
+      'features': features,
+      'is_popular': isPopular,
+    };
   }
 }

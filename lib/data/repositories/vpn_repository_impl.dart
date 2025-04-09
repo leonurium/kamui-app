@@ -6,11 +6,13 @@ import '../../domain/entities/server.dart';
 import '../../domain/entities/session.dart';
 import '../../core/utils/device_info.dart';
 import '../../core/utils/logger.dart';
+import 'vpn_repository_mock.dart';
 
 class VpnRepositoryImpl implements VpnRepository {
   final ApiClient _apiClient;
+  final VpnRepositoryMock _mockRepository;
 
-  VpnRepositoryImpl(this._apiClient);
+  VpnRepositoryImpl(this._apiClient) : _mockRepository = VpnRepositoryMock();
 
   @override
   Future<List<Server>> getServers() async {
@@ -24,6 +26,13 @@ class VpnRepositoryImpl implements VpnRepository {
       
       return mainResponse.data?.cast<Server>() ?? [];
     } on DioException catch (e) {
+      // If server is down or timeout, use mock data
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        return _mockRepository.getServers();
+      }
       throw Exception('Failed to get servers: ${e.message}');
     }
   }
@@ -58,6 +67,13 @@ class VpnRepositoryImpl implements VpnRepository {
       Logger.info('VpnRepository: Successfully connected to VPN');
       return mainResponse.data!;
     } on DioException catch (e) {
+      // If server is down or timeout, use mock data
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        return _mockRepository.connect(serverId);
+      }
       Logger.error('VpnRepository: Failed to connect to VPN: ${e.message}');
       throw Exception('Failed to connect: ${e.message}');
     }
@@ -76,6 +92,13 @@ class VpnRepositoryImpl implements VpnRepository {
       final mainResponse = MainResponse.fromJson(response.data, null);
       return mainResponse.success;
     } on DioException catch (e) {
+      // If server is down or timeout, use mock data
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        return _mockRepository.disconnect(sessionId);
+      }
       throw Exception('Failed to disconnect: ${e.message}');
     }
   }

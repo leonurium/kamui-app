@@ -3,11 +3,13 @@ import '../../core/network/api_client.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../models/main_response.dart';
 import '../../domain/entities/device.dart';
+import 'auth_repository_mock.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final ApiClient _apiClient;
+  final AuthRepositoryMock _mockRepository;
 
-  AuthRepositoryImpl(this._apiClient);
+  AuthRepositoryImpl(this._apiClient) : _mockRepository = AuthRepositoryMock();
 
   @override
   Future<MainResponse<Device>> registerDevice(String deviceId, String signature) async {
@@ -25,6 +27,13 @@ class AuthRepositoryImpl implements AuthRepository {
         (json) => Device.fromJson(json as Map<String, dynamic>),
       );
     } on DioException catch (e) {
+      // If server is down or timeout, use mock data
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        return _mockRepository.registerDevice(deviceId, signature);
+      }
       throw Exception('Failed to register device: ${e.message}');
     }
   }

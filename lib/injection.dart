@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
 import 'package:kamui_app/presentation/blocs/splash/splash_bloc.dart';
+import 'package:kamui_app/presentation/blocs/premium/premium_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/network/api_client.dart';
@@ -66,6 +67,11 @@ Future<void> init() async {
     ));
 
     sl.registerFactory<ServerListBloc>(() => ServerListBloc(sl<SharedPreferences>()));
+
+    sl.registerFactory<PremiumBloc>(() => PremiumBloc(
+      getPackagesUseCase: sl<GetPackagesUseCase>(),
+      purchasePackageUseCase: sl<PurchasePackageUseCase>(),
+    ));
   } catch (e) {
     Logger.error('Error in dependency injection: $e');
     rethrow;
