@@ -33,8 +33,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x'
-          channel: 'stable'
+          flutter-version: 'master'
+          channel: 'master'
       
       - name: Create .env file
         run: |
@@ -64,7 +64,7 @@ jobs:
           # Create gradlew if it doesn't exist
           if [ ! -f "gradlew" ]; then
             echo "Creating gradlew..."
-            gradle wrapper
+            gradle wrapper --gradle-version 8.2 --stacktrace
           fi
           # Make gradlew executable
           chmod +x gradlew
@@ -107,8 +107,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x'
-          channel: 'stable'
+          flutter-version: 'master'
+          channel: 'master'
       
       - name: Create .env file
         run: |
@@ -157,8 +157,8 @@ jobs:
           ls -la build/
           echo "=== Contents of build/ios directory ==="
           ls -la build/ios/
-          echo "=== Contents of build/ios/ipa directory ==="
-          ls -la build/ios/ipa/ || echo "ipa directory not found"
+          echo "=== Contents of build/ios/archive directory ==="
+          ls -la build/ios/archive/ || echo "archive directory not found"
           echo "=== Contents of ios directory ==="
           ls -la ios/
           echo "=== Contents of ios/Runner.xcworkspace ==="
@@ -166,24 +166,27 @@ jobs:
       
       - name: Verify IPA Exists
         run: |
-          if [ ! -f "build/ios/ipa/*.ipa" ]; then
-            echo "Error: IPA file not found at build/ios/ipa/Runner.ipa"
+          IPA_PATH=$(find build/ios/archive -name "*.ipa" | head -n 1)
+          if [ -z "$IPA_PATH" ]; then
+            echo "Error: IPA file not found in build/ios/archive"
             echo "Searching for IPA files in other locations..."
             find . -name "*.ipa" -type f
             exit 1
           fi
+          echo "Found IPA at: $IPA_PATH"
+          echo "IPA_PATH=$IPA_PATH" >> $GITHUB_ENV
       
       - name: Upload iOS IPA
         uses: actions/upload-artifact@v4
         with:
           name: debug-ipa
-          path: build/ios/ipa/*.ipa
+          path: ${{ env.IPA_PATH }}
       
       - name: Firebase App Distribution - iOS
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_IOS_APP_ID }}
           groups: qa-testers
-          file: build/ios/ipa/*.ipa
+          file: ${{ env.IPA_PATH }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           releaseNotes: ${{ env.RELEASE_NOTES }} 
