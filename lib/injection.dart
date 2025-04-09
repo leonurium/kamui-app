@@ -4,6 +4,7 @@ import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
 import 'package:kamui_app/presentation/blocs/splash/splash_bloc.dart';
 import 'package:kamui_app/presentation/blocs/premium/premium_bloc.dart';
+import 'package:kamui_app/presentation/blocs/onboarding/onboarding_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/network/api_client.dart';
@@ -72,6 +73,9 @@ Future<void> init() async {
       getPackagesUseCase: sl<GetPackagesUseCase>(),
       purchasePackageUseCase: sl<PurchasePackageUseCase>(),
     ));
+
+    // Onboarding bloc
+    sl.registerFactory<OnboardingBloc>(() => OnboardingBloc(prefs: sl<SharedPreferences>()));
   } catch (e) {
     Logger.error('Error in dependency injection: $e');
     rethrow;

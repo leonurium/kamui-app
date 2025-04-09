@@ -1,11 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kamui_app/presentation/blocs/splash/splash_bloc.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
+import 'package:kamui_app/presentation/blocs/onboarding/onboarding_bloc.dart';
 import 'package:kamui_app/core/utils/custom_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'injection.dart' as di;
 import 'presentation/screens/splash_screen.dart';
+import 'presentation/screens/onboarding_screen.dart';
 import 'core/utils/logger.dart';
 
 void main() async {
@@ -48,8 +50,22 @@ class App extends StatelessWidget {
           BlocProvider.value(
             value: vpnBloc,
           ),
+          BlocProvider(
+            create: (context) {
+              final bloc = di.sl<OnboardingBloc>();
+              bloc.add(CheckOnboardingStatus());
+              return bloc;
+            },
+          ),
         ],
-        child: SplashScreen(),
+        child: BlocBuilder<OnboardingBloc, OnboardingState>(
+          builder: (context, state) {
+            if (state is OnboardingNotCompleted) {
+              return OnboardingScreen();
+            }
+            return SplashScreen();
+          },
+        ),
       ),
     );
   }
