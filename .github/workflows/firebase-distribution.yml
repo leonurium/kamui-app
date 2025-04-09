@@ -58,15 +58,12 @@ jobs:
           echo "$COMMITS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
       
-      - name: Fix Gradle Plugin
-        run: |
-          cd android
-          sed -i '' 's/apply from: "$flutterRoot\/packages\/flutter_tools\/gradle\/app_plugin_loader.gradle"/plugins { id "com.android.application" version "7.3.0" apply false }/g' build.gradle
-          cd ..
-      
       - name: Build Android APK
         run: |
-          flutter build apk --debug --verbose
+          cd android
+          ./gradlew clean
+          cd ..
+          flutter build apk --debug
           if [ $? -ne 0 ]; then
             echo "Build failed, showing stacktrace..."
             cd android
@@ -132,7 +129,7 @@ jobs:
       
       - name: Build iOS IPA
         run: |
-          flutter build ipa --debug --no-codesign --verbose
+          flutter build ipa --debug --no-codesign
           if [ $? -ne 0 ]; then
             echo "Build failed, showing stacktrace..."
             cd ios
@@ -144,13 +141,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: debug-ipa
-          path: build/ios/ipa/*.ipa
+          path: build/ios/ipa/Runner.ipa
       
       - name: Firebase App Distribution - iOS
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_IOS_APP_ID }}
           groups: qa-testers
-          file: build/ios/ipa/*.ipa
+          file: build/ios/ipa/Runner.ipa
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           releaseNotes: ${{ env.RELEASE_NOTES }} 
