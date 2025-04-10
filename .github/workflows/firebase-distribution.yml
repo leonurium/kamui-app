@@ -141,7 +141,7 @@ jobs:
       
       - name: Build iOS IPA
         run: |
-          flutter build ipa
+          flutter build ipa --no-codesign
           if [ $? -ne 0 ]; then
             echo "Build failed, showing stacktrace..."
             cd ios
