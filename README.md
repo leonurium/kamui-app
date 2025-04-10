@@ -177,6 +177,12 @@ lib/
 - ads should be have auto click, settings by cms
 - logo app is it already fix?
 - add field for flag country image
+- apakah timer waktu di hilangkan di halaman home page?
+- privacy policy
+- support page
+- marketing page
+- user agreement
+- onboarding page?
 
 ads
 - first load showing ads

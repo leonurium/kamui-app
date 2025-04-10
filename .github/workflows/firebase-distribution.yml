@@ -31,10 +31,29 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Setup Flutter
+        id: flutter-setup
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'master'
-          channel: 'master'
+          channel: 'stable'
+          flutter-version-file: pubspec.yaml
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:'
+          pub-cache-key: 'flutter-pub:os:-:channel:-:version:-:arch:-:hash:'
+      
+      - name: Print Flutter Setup Outputs
+        run: |
+          echo "=== Flutter Setup Details ==="
+          echo "Cache Path: ${{ steps.flutter-setup.outputs.CACHE-PATH }}"
+          echo "Cache Key: ${{ steps.flutter-setup.outputs.CACHE-KEY }}"
+          echo "Channel: ${{ steps.flutter-setup.outputs.CHANNEL }}"
+          echo "Version: ${{ steps.flutter-setup.outputs.VERSION }}"
+          echo "Architecture: ${{ steps.flutter-setup.outputs.ARCHITECTURE }}"
+          echo "Pub Cache Path: ${{ steps.flutter-setup.outputs.PUB-CACHE-PATH }}"
+          echo "Pub Cache Key: ${{ steps.flutter-setup.outputs.PUB-CACHE-KEY }}"
+          echo "=== Flutter Version ==="
+          flutter --version
+          echo "=== Flutter Doctor ==="
+          flutter doctor -v
       
       - name: Create .env file
         run: |
@@ -60,13 +79,14 @@ jobs:
       
       - name: Build Android APK
         run: |
-          flutter build apk --debug
+          flutter build apk
           if [ $? -ne 0 ]; then
             echo "Build failed, showing stacktrace..."
             cd android
             ./gradlew assembleDebug --stacktrace --info
             exit 1
           fi
+          flutter build appbundle
       
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
@@ -90,10 +110,29 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Setup Flutter
+        id: flutter-setup
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x'
           channel: 'stable'
+          flutter-version-file: pubspec.yaml
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:'
+          pub-cache-key: 'flutter-pub:os:-:channel:-:version:-:arch:-:hash:'
+      
+      - name: Print Flutter Setup Outputs
+        run: |
+          echo "=== Flutter Setup Details ==="
+          echo "Cache Path: ${{ steps.flutter-setup.outputs.CACHE-PATH }}"
+          echo "Cache Key: ${{ steps.flutter-setup.outputs.CACHE-KEY }}"
+          echo "Channel: ${{ steps.flutter-setup.outputs.CHANNEL }}"
+          echo "Version: ${{ steps.flutter-setup.outputs.VERSION }}"
+          echo "Architecture: ${{ steps.flutter-setup.outputs.ARCHITECTURE }}"
+          echo "Pub Cache Path: ${{ steps.flutter-setup.outputs.PUB-CACHE-PATH }}"
+          echo "Pub Cache Key: ${{ steps.flutter-setup.outputs.PUB-CACHE-KEY }}"
+          echo "=== Flutter Version ==="
+          flutter --version
+          echo "=== Flutter Doctor ==="
+          flutter doctor -v
       
       - name: Create .env file
         run: |
@@ -126,7 +165,7 @@ jobs:
       
       - name: Build iOS IPA
         run: |
-          flutter build ipa --debug --no-codesign
+          flutter build ios --release --no-codesign
           if [ $? -ne 0 ]; then
             echo "Build failed, showing stacktrace..."
             cd ios
@@ -138,23 +177,12 @@ jobs:
         run: |
           echo "=== Debugging Build Output ==="
           echo "Current directory: $(pwd)"
-          ls -la $(pwd)
-          echo "Current directory: $(pwd)/build"
-          ls -la $(pwd)/build
-          echo "Current directory: $(pwd)/build/ios"
-          ls -la $(pwd)/build/ios
-          echo "Current directory: $(pwd)/build/ios/ipa"
-          ls -la $(pwd)/build/ios/ipa
           echo "=== Contents of build directory ==="
-          ls -la build/
+          ls build/
           echo "=== Contents of build/ios directory ==="
-          ls -la build/ios/
-          echo "=== Contents of build/ios/archive directory ==="
-          ls -la build/ios/archive/ || echo "archive directory not found"
-          echo "=== Contents of ios directory ==="
-          ls -la ios/
-          echo "=== Contents of ios/Runner.xcworkspace ==="
-          ls -la ios/Runner.xcworkspace/
+          ls build/ios/
+          echo "=== Contents of build/ios/ipa directory ==="
+          ls build/ios/ipa
       
       - name: Verify IPA Exists
         run: |
