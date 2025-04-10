@@ -30,6 +30,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      
       - name: Setup Flutter
         id: flutter-setup
         uses: subosito/flutter-action@v2
@@ -39,21 +45,6 @@ jobs:
           cache: true
           cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:'
           pub-cache-key: 'flutter-pub:os:-:channel:-:version:-:arch:-:hash:'
-      
-      - name: Print Flutter Setup Outputs
-        run: |
-          echo "=== Flutter Setup Details ==="
-          echo "Cache Path: ${{ steps.flutter-setup.outputs.CACHE-PATH }}"
-          echo "Cache Key: ${{ steps.flutter-setup.outputs.CACHE-KEY }}"
-          echo "Channel: ${{ steps.flutter-setup.outputs.CHANNEL }}"
-          echo "Version: ${{ steps.flutter-setup.outputs.VERSION }}"
-          echo "Architecture: ${{ steps.flutter-setup.outputs.ARCHITECTURE }}"
-          echo "Pub Cache Path: ${{ steps.flutter-setup.outputs.PUB-CACHE-PATH }}"
-          echo "Pub Cache Key: ${{ steps.flutter-setup.outputs.PUB-CACHE-KEY }}"
-          echo "=== Flutter Version ==="
-          flutter --version
-          echo "=== Flutter Doctor ==="
-          flutter doctor -v
       
       - name: Create .env file
         run: |
@@ -119,21 +110,6 @@ jobs:
           cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:'
           pub-cache-key: 'flutter-pub:os:-:channel:-:version:-:arch:-:hash:'
       
-      - name: Print Flutter Setup Outputs
-        run: |
-          echo "=== Flutter Setup Details ==="
-          echo "Cache Path: ${{ steps.flutter-setup.outputs.CACHE-PATH }}"
-          echo "Cache Key: ${{ steps.flutter-setup.outputs.CACHE-KEY }}"
-          echo "Channel: ${{ steps.flutter-setup.outputs.CHANNEL }}"
-          echo "Version: ${{ steps.flutter-setup.outputs.VERSION }}"
-          echo "Architecture: ${{ steps.flutter-setup.outputs.ARCHITECTURE }}"
-          echo "Pub Cache Path: ${{ steps.flutter-setup.outputs.PUB-CACHE-PATH }}"
-          echo "Pub Cache Key: ${{ steps.flutter-setup.outputs.PUB-CACHE-KEY }}"
-          echo "=== Flutter Version ==="
-          flutter --version
-          echo "=== Flutter Doctor ==="
-          flutter doctor -v
-      
       - name: Create .env file
         run: |
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" > .env
@@ -165,24 +141,13 @@ jobs:
       
       - name: Build iOS IPA
         run: |
-          flutter build ios --release --no-codesign
+          flutter build ipa
           if [ $? -ne 0 ]; then
             echo "Build failed, showing stacktrace..."
             cd ios
             xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Debug -sdk iphoneos -verbose
             exit 1
           fi
-      
-      - name: Debug Build Output
-        run: |
-          echo "=== Debugging Build Output ==="
-          echo "Current directory: $(pwd)"
-          echo "=== Contents of build directory ==="
-          ls build/
-          echo "=== Contents of build/ios directory ==="
-          ls build/ios/
-          echo "=== Contents of build/ios/ipa directory ==="
-          ls build/ios/ipa
       
       - name: Verify IPA Exists
         run: |
@@ -192,7 +157,7 @@ jobs:
           # If not found, try alternative locations
           if [ -z "$IPA_PATH" ]; then
             echo "IPA not found in standard location, searching alternatives..."
-            IPA_PATH=$(find build/ios -name "*.ipa" | head -n 1)
+            IPA_PATH=$(find build/ios/ipa -name "*.ipa" | head -n 1)
           fi
           
           if [ -z "$IPA_PATH" ]; then
