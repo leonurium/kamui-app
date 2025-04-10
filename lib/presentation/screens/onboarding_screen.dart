@@ -6,6 +6,7 @@ import 'package:kamui_app/injection.dart' as di;
 import 'package:wireguard_flutter/wireguard_flutter.dart';
 import 'package:wireguard_flutter/wireguard_flutter_platform_interface.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
+import 'package:kamui_app/core/utils/doodle_ipsum_utils.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -23,19 +24,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     OnboardingPage(
       title: 'Welcome to Gama VPN',
       description: 'Secure your internet connection and protect your privacy with our fast and reliable VPN service.',
-      image: 'assets/onboarding1.png',
+      image: DoodleIpsumUtils.getImageUrl(
+        width: 500,
+        height: 500,
+        category: 'flat',
+        seed: 'welcome',
+        isRandom: false,
+      ),
       color: Color.fromRGBO(37, 112, 252, 1),
     ),
     OnboardingPage(
       title: 'Privacy Policy',
       description: 'We respect your privacy. Our service is designed to protect your data and keep your online activities private.',
-      image: 'assets/onboarding2.png',
+      image: DoodleIpsumUtils.getImageUrl(
+        width: 500,
+        height: 500,
+        category: 'flat',
+        seed: 'privacy',
+        isRandom: false,
+      ),
       color: Color.fromRGBO(37, 112, 252, 1),
     ),
     OnboardingPage(
       title: 'VPN Permission',
       description: 'To establish a secure connection, we need to create a VPN profile on your device.',
-      image: 'assets/onboarding3.png',
+      image: DoodleIpsumUtils.getImageUrl(
+        width: 500,
+        height: 500,
+        category: 'flat',
+        seed: 'vpn',
+        isRandom: false,
+      ),
       color: Color.fromRGBO(37, 112, 252, 1),
     ),
   ];
@@ -183,10 +202,10 @@ class OnboardingPageView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(
+          DoodleIpsumUtils.getImage(
             page.image,
+            width: 300,
             height: 300,
-            fit: BoxFit.contain,
           ),
           SizedBox(height: 40),
           Text(

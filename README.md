@@ -178,6 +178,7 @@ lib/
 - logo app is it already fix?
 - add field for flag country image
 - apakah timer waktu di hilangkan di halaman home page?
+- update package entities
 - privacy policy
 - support page
 - marketing page

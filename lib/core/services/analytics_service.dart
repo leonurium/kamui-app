@@ -6,9 +6,9 @@ class AnalyticsService {
 
   // Track screen views
   static Future<void> setCurrentScreen(String screenName) async {
-    await analytics.setCurrentScreen(
+    await analytics.logScreenView(
       screenName: screenName,
-      screenClassOverride: screenName,
+      screenClass: screenName
     );
   }
 

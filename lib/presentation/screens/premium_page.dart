@@ -61,13 +61,26 @@ class PremiumPage extends StatelessWidget {
   }
 
   Widget _buildPackageList(BuildContext context, List<Package> packages) {
-    return ListView.builder(
-      padding: EdgeInsets.all(16),
-      itemCount: packages.length,
-      itemBuilder: (context, index) {
-        final package = packages[index];
-        return _PackageCard(package: package);
-      },
+    return Column(
+      children: [
+        SizedBox(height: 16),
+        SizedBox(
+          height: 500, // Fixed height for horizontal scroll
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            itemCount: packages.length,
+            itemBuilder: (context, index) {
+              final package = packages[index];
+              return Container(
+                width: 300, // Fixed width for each card
+                margin: EdgeInsets.only(right: 16),
+                child: _PackageCard(package: package),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -144,15 +157,37 @@ class _PackageCard extends StatelessWidget {
               ),
             )),
             SizedBox(height: 16),
+            if (package.discount > 0)
+              Text(
+                '${package.price.toStringAsFixed(2)} ${package.currency}',
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  decoration: TextDecoration.lineThrough,
+                  color: Colors.grey,
+                ),
+              ),
+            SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '${package.price} ${package.currency}',
-                  style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                    color: Color.fromRGBO(37, 112, 252, 1),
-                    fontWeight: FontWeight.bold,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${package.priceAfterDiscount.toStringAsFixed(2)} ${package.currency}',
+                      style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                        color: Color.fromRGBO(37, 112, 252, 1),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (package.discount > 0)
+                      Text(
+                        '${package.discount}% OFF',
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                  ],
                 ),
                 ElevatedButton(
                   onPressed: () {

@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:kamui_app/injection.dart' as di;
 
 part 'onboarding_event.dart';
 part 'onboarding_state.dart';
