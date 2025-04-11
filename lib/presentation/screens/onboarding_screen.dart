@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/presentation/blocs/onboarding/onboarding_bloc.dart';
 import 'package:kamui_app/presentation/screens/home_page.dart';
 import 'package:kamui_app/injection.dart' as di;
@@ -71,6 +72,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       // Permission granted, proceed to complete onboarding
       context.read<OnboardingBloc>().add(CompleteOnboarding());
     } catch (e) {
+      Logger.error(e.toString());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('VPN permission is required. Please grant permission when prompted.'),
@@ -157,7 +159,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       ),
                       child: Text(
-                        _currentPage == _pages.length - 1 ? 'Get Started' : 'Next',
+                        _currentPage == _pages.length - 1 ? 'Grant Permission' : 'Next',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,

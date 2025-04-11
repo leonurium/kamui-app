@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:kamui_app/core/config/constants.dart';
 import '../../core/network/api_client.dart';
 import '../../domain/repositories/premium_repository.dart';
 import '../models/main_response.dart';
@@ -51,11 +52,13 @@ class PremiumRepositoryImpl implements PremiumRepository {
       return mainResponse.success;
     } on DioException catch (e) {
       // If server is down or timeout, use mock data
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout ||
-          e.type == DioExceptionType.connectionError) {
-        return _mockRepository.purchasePackage(packageId, purchaseToken, platform);
+      if (Constants.isUseMockData) {
+        if (e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            e.type == DioExceptionType.connectionError) {
+          return _mockRepository.purchasePackage(packageId, purchaseToken, platform);
+        }
       }
       throw Exception('Failed to purchase package: ${e.message}');
     }

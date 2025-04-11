@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:kamui_app/core/config/constants.dart';
 import '../../core/network/api_client.dart';
 import '../../domain/repositories/vpn_repository.dart';
 import '../models/main_response.dart';
@@ -27,11 +28,13 @@ class VpnRepositoryImpl implements VpnRepository {
       return mainResponse.data?.cast<Server>() ?? [];
     } on DioException catch (e) {
       // If server is down or timeout, use mock data
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout ||
-          e.type == DioExceptionType.connectionError) {
-        return _mockRepository.getServers();
+      if (Constants.isUseMockData) {
+        if (e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            e.type == DioExceptionType.connectionError) {
+          return _mockRepository.getServers();
+        }
       }
       throw Exception('Failed to get servers: ${e.message}');
     }

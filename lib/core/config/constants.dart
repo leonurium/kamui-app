@@ -8,4 +8,5 @@ class Constants {
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
   static String get apiKey => dotenv.env['API_KEY'] ?? '';
   static bool get networkLogger => dotenv.env['NETWORK_LOGGER'] == 'true';
+  static bool get isUseMockData => dotenv.env['USE_MOCK_DATA'] == 'true';
 }

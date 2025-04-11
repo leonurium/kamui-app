@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:kamui_app/core/config/constants.dart';
 import '../../core/network/api_client.dart';
 import '../../domain/repositories/ads_repository.dart';
 import '../models/main_response.dart';
@@ -24,12 +25,15 @@ class AdsRepositoryImpl implements AdsRepository {
       return mainResponse.data?.cast<Ad>() ?? [];
     } on DioException catch (e) {
       // If server is down or timeout, use mock data
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout ||
-          e.type == DioExceptionType.connectionError) {
-        return _mockRepository.getAds();
+      if (Constants.isUseMockData) {
+        if (e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            e.type == DioExceptionType.connectionError) {
+          return _mockRepository.getAds();
+        }
       }
+      
       throw Exception('Failed to get ads: ${e.message}');
     }
   }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:avatar_glow/avatar_glow.dart';
+import 'package:kamui_app/core/config/constants.dart';
 import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/presentation/screens/server_list_page.dart';
 import 'package:kamui_app/presentation/screens/premium_page.dart';
@@ -296,32 +297,39 @@ Endpoint = ${session.endpoint}:${session.listenPort}
       Logger.info('WireGuard VPN started successfully');
     } catch (e) {
       Logger.error('WireGuard connection error: $e');
-      if (mounted) {
-        // Check if error is due to permission denial
-        if (e.toString().contains('permission') || e.toString().contains('denied')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('VPN permission was denied. Please enable VPN access in system settings.'),
-              action: SnackBarAction(
-                label: 'Settings',
-                onPressed: () {
-                  // Open system settings
-                  // Note: You'll need to implement platform-specific code to open settings
-                  // For Android: url_launcher can be used
-                  // For iOS: You can't programmatically open VPN settings
-                },
+      if (Constants.isUseMockData) {
+        // If using mock data, simulate successful connection
+        setState(() {
+          _currentStage = VpnStage.connected;
+        });
+      } else {
+        if (mounted) {
+          // Check if error is due to permission denial
+          if (e.toString().contains('permission') || e.toString().contains('denied')) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('VPN permission was denied. Please enable VPN access in system settings.'),
+                action: SnackBarAction(
+                  label: 'Settings',
+                  onPressed: () {
+                    // Open system settings
+                    // Note: You'll need to implement platform-specific code to open settings
+                    // For Android: url_launcher can be used
+                    // For iOS: You can't programmatically open VPN settings
+                  },
+                ),
               ),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to connect to VPN: $e')),
-          );
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to connect to VPN: $e')),
+            );
+          }
         }
+        setState(() {
+          _currentStage = VpnStage.disconnected;
+        });
       }
-      setState(() {
-        _currentStage = VpnStage.disconnected;
-      });
     }
   }
 
@@ -518,27 +526,39 @@ Endpoint = ${session.endpoint}:${session.listenPort}
                         ),
                       ),
                       SizedBox(height: 20),
-                      BlocBuilder<VpnBloc, VpnState>(
-                        bloc: widget.vpnBloc,
-                        builder: (context, state) {
-                          String duration = '00.00.00';
-                          if (state is VpnConnected) {
-                            final startTime = DateTime.parse(state.session.startTime);
-                            final now = DateTime.now();
-                            final diff = now.difference(startTime);
-                            duration = "${diff.inHours.toString().padLeft(2, '0')}.${(diff.inMinutes % 60).toString().padLeft(2, '0')}.${(diff.inSeconds % 60).toString().padLeft(2, '0')}";
-                          }
-                          return Center(
-                            child: Text(
-                              duration,
-                              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: Color.fromRGBO(37, 112, 252, 1),
-                              ),
-                            ),
-                          );
-                        },
+                      Center(
+                        child: Text(
+                          connectionDescription(state: _currentStage),
+                          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            color: _currentStage == VpnStage.connected 
+                              ? Color.fromRGBO(37, 112, 252, 1)
+                              : Theme.of(context).textTheme.bodyLarge!.color,
+                          ),
+                        ),
                       ),
+                      SizedBox(height: 20),
+                      if (_currentStage == VpnStage.connected)
+                        BlocBuilder<VpnBloc, VpnState>(
+                          bloc: widget.vpnBloc,
+                          builder: (context, state) {
+                            String duration = '00.00.00';
+                            if (state is VpnConnected) {
+                              final startTime = DateTime.parse(state.session.startTime);
+                              final now = DateTime.now();
+                              final diff = now.difference(startTime);
+                              duration = "${diff.inHours.toString().padLeft(2, '0')}.${(diff.inMinutes % 60).toString().padLeft(2, '0')}.${(diff.inSeconds % 60).toString().padLeft(2, '0')}";
+                            }
+                            return Center(
+                              child: Text(
+                                duration,
+                                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: Color.fromRGBO(37, 112, 252, 1),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       SizedBox(height: 25),
                       ServerItemWidget(
                         flagAsset: 'assets/logo.png',
@@ -605,15 +625,27 @@ Endpoint = ${session.endpoint}:${session.listenPort}
   String connectionState({VpnStage? state}) {
     switch (state) {
       case VpnStage.connected:
-        return 'You are connected';
+        return 'Connected';
       case VpnStage.connecting:
-        return 'VPN is connecting';
+        return 'Connecting';
       case VpnStage.disconnected:
-        return 'You are disconnected';
+        return 'Disconnected';
       case VpnStage.disconnecting:
-        return 'VPN is disconnecting';
+        return 'Disconnecting';
       case VpnStage.denied:
-        return 'Error getting status';
+        return 'Denied';
+      case VpnStage.authenticating:
+        return 'Authenticating';
+      case VpnStage.exiting:
+        return 'Exiting';
+      case VpnStage.noConnection:
+        return 'No Connection';
+      case VpnStage.preparing:
+        return 'Preparing';
+      case VpnStage.reconnect:
+        return 'Reconnecting';
+      case VpnStage.waitingConnection:
+        return 'Waiting Connection';
       default:
         return 'Getting connection status';
     }
@@ -631,8 +663,31 @@ Endpoint = ${session.endpoint}:${session.listenPort}
         return 'Disconnecting';
       case VpnStage.denied:
         return 'Denied';
+      case VpnStage.authenticating:
+        return 'Authenticating';
+      case VpnStage.exiting:
+        return 'Exiting';
+      case VpnStage.noConnection:
+        return 'No Connection';
+      case VpnStage.preparing:
+        return 'Preparing';
+      case VpnStage.reconnect:
+        return 'Reconnecting';
+      case VpnStage.waitingConnection:
+        return 'Waiting Connection';
       default:
-        return 'Disconnected';
+        return 'Getting connection status';
+    }
+  }
+
+  String connectionDescription({VpnStage? state}) {
+    switch (state) {
+      case VpnStage.connected:
+        return 'Your Internet is private';
+      case VpnStage.disconnected:
+        return 'Your Internet is not private';
+      default:
+        return '';
     }
   }
 
@@ -640,13 +695,6 @@ Endpoint = ${session.endpoint}:${session.listenPort}
     switch (state) {
       case VpnStage.connected:
         return Color.fromRGBO(37, 112, 252, 1);
-      case VpnStage.connecting:
-        return Color.fromRGBO(87, 141, 240, 1);
-      case VpnStage.disconnected:
-      case VpnStage.disconnecting:
-        return Colors.grey;
-      case VpnStage.denied:
-        return Colors.red;
       default:
         return Colors.grey;
     }
