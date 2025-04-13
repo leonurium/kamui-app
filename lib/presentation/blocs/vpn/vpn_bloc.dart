@@ -2,11 +2,11 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/core/services/analytics_service.dart';
-import '../../../domain/entities/server.dart';
-import '../../../domain/entities/session.dart';
-import '../../../domain/usecases/get_servers_usecase.dart';
-import '../../../domain/usecases/connect_vpn_usecase.dart';
-import '../../../domain/usecases/disconnect_vpn_usecase.dart';
+import 'package:kamui_app/domain/entities/connection_data.dart';
+import 'package:kamui_app/domain/entities/server.dart';
+import 'package:kamui_app/domain/usecases/get_servers_usecase.dart';
+import 'package:kamui_app/domain/usecases/connect_vpn_usecase.dart';
+import 'package:kamui_app/domain/usecases/disconnect_vpn_usecase.dart';
 
 part 'vpn_event.dart';
 part 'vpn_state.dart';
@@ -64,12 +64,12 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
     Logger.info('VpnBloc: Connecting to VPN with serverId: ${event.serverId}');
     emit(VpnConnecting());
     try {
-      final session = await _connectVpnUseCase.execute(event.serverId);
-      Logger.info('VpnBloc: Successfully connected to VPN. Session: $session');
+      final connectionData = await _connectVpnUseCase.execute(event.serverId);
+      Logger.info('VpnBloc: Successfully connected to VPN. connectionData: $connectionData');
       _connectionStartTime = DateTime.now();
-      _currentServerLocation = session.poolName; // Using poolName as server location
+      _currentServerLocation = connectionData.session.poolName; // Using poolName as server location
       _currentProtocol = 'WireGuard'; // Assuming WireGuard protocol
-      emit(VpnConnected(session));
+      emit(VpnConnected(connectionData));
       
       // Track VPN connection
       await AnalyticsService.logVpnConnect(

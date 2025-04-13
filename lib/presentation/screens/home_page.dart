@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/services.dart';  // Add this import for PlatformException
 
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:kamui_app/core/config/constants.dart';
 import 'package:kamui_app/core/utils/logger.dart';
+import 'package:kamui_app/domain/entities/connection_data.dart';
 import 'package:kamui_app/presentation/screens/server_list_page.dart';
 import 'package:kamui_app/presentation/screens/premium_page.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +34,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool _showingAds = false;
   bool _isFirstLaunch = true;
-  Session? currentSession;
+  ConnectionData? currentConnectionData;
   Server? server;
   String connectionTime = '00.00.00';
   late String signature;
@@ -57,8 +59,8 @@ class _HomePageState extends State<HomePage> {
     }
     
     _initWireguard();
-    // Show ads on first launch
-    if (_isFirstLaunch) {
+    // Show ads on first launch only if forceBlockAds is false
+    if (_isFirstLaunch && !Constants.forceBlockAds) {
       setState(() {
         _showingAds = true;
       });
@@ -129,13 +131,18 @@ class _HomePageState extends State<HomePage> {
     Logger.info('on _handleVpnConnection');
     
     setState(() {
-      _showingAds = true;
-      _isConnecting = true;
+      if (!Constants.forceBlockAds) {
+        _showingAds = true;
+      } else {
+        // If ads are blocked, trigger VPN connection directly
+        _isConnecting = true;
+        _onAdsClosed(); // This will handle the VPN connection
+      }
     });
   }
 
   void _handleVpnDisconnection() {
-    if (currentSession == null) {
+    if (currentConnectionData == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No active connection to disconnect')),
       );
@@ -145,8 +152,13 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
     
     setState(() {
-      _showingAds = true;
-      _isConnecting = false;
+      if (!Constants.forceBlockAds) {
+        _showingAds = true;
+      } else {
+        // If ads are blocked, trigger VPN disconnection directly
+        _isConnecting = false;
+        _onAdsClosed(); // This will handle the VPN disconnection
+      }
     });
   }
 
@@ -191,8 +203,8 @@ class _HomePageState extends State<HomePage> {
         );
       }
     } else {
-      if (currentSession != null) {
-        Logger.info('HomePage: Disconnecting from VPN with session: $currentSession');
+      if (currentConnectionData != null) {
+        Logger.info('HomePage: Disconnecting from VPN with session: $currentConnectionData');
         // Show loading indicator
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -209,9 +221,9 @@ class _HomePageState extends State<HomePage> {
         
         // Add disconnect event to bloc
         widget.vpnBloc.add(DisconnectVpnEvent(
-          sessionId: currentSession!.sessionId,
-          serverLocation: currentSession!.serverId.toString(),
-          protocol: currentSession!.endpoint));
+          sessionId: currentConnectionData!.session.sessionId,
+          serverLocation: currentConnectionData!.session.serverId.toString(),
+          protocol: currentConnectionData!.session.endpoint));
       } else {
         // ScaffoldMessenger.of(context).showSnackBar(
         //   SnackBar(content: Text('No active connection to disconnect')),
@@ -232,7 +244,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _connectWireguard(Session session) async {
+  Future<void> _connectWireguard(ConnectionData connectionData) async {
     // Check VPN permission first
     final hasPermission = await _checkVpnPermission();
     if (!hasPermission) {
@@ -249,22 +261,24 @@ class _HomePageState extends State<HomePage> {
 
     try {
       // Save session data to SharedPreferences
-      final sessionJson = jsonEncode(session.toJson());
-      await _prefs.setString('current_session', sessionJson);
-      Logger.info('Session data saved to SharedPreferences');
+      final sessionJson = jsonEncode(connectionData.toJson());
+      await _prefs.setString('current_connection_data', sessionJson);
+      Logger.info('Current Connection data saved to SharedPreferences');
 
-      final config = '''
-[Interface]
-PrivateKey = ${session.privateKey}
-Address = ${session.ipAddress}
-DNS = 1.1.1.1, 8.8.8.8, 10.0.0.1
+      String config = '[Interface]';
+      config += '\nPrivateKey = ${connectionData.session.privateKey}';
+      config += '\nAddress = ${connectionData.session.ipAddress}';
+      config += '\nDNS = ${connectionData.pool.dns}';
+      config += '\n[Peer]';
+      config += '\nPublicKey = ${connectionData.session.publicKey}';
+      
+      config += '\nAllowedIPs = ${connectionData.pool.allowedIps}';
+      config += '\nPersistentKeepalive = ${connectionData.pool.persistentKeepalive}';
+      config += '\nEndpoint = ${connectionData.session.endpoint}:${connectionData.session.listenPort}';
 
-[Peer]
-PublicKey = ${session.publicKey}
-AllowedIPs = 0.0.0.0/0, ::/0
-PersistentKeepalive = 0
-Endpoint = ${session.endpoint}:${session.listenPort}
-''';
+      if (connectionData.pool.presharedKey.trim().isNotEmpty) {
+        config += '\nPresharedKey = ${connectionData.pool.presharedKey}';
+      }
 
       Logger.info('Starting WireGuard VPN with config: $config');
       
@@ -285,7 +299,7 @@ Endpoint = ${session.endpoint}:${session.listenPort}
       }
       
       await _wireguard.startVpn(
-        serverAddress: session.endpoint,
+        serverAddress: connectionData.session.endpoint,
         wgQuickConfig: config,
         providerBundleIdentifier: 'com.gamavpn.app',
       );
@@ -297,6 +311,9 @@ Endpoint = ${session.endpoint}:${session.listenPort}
       Logger.info('WireGuard VPN started successfully');
     } catch (e) {
       Logger.error('WireGuard connection error: $e');
+      Logger.error('Error type: ${e.runtimeType}');
+      Logger.error('Error stack trace: ${StackTrace.current}');
+      
       if (Constants.isUseMockData) {
         // If using mock data, simulate successful connection
         setState(() {
@@ -304,27 +321,30 @@ Endpoint = ${session.endpoint}:${session.listenPort}
         });
       } else {
         if (mounted) {
-          // Check if error is due to permission denial
-          if (e.toString().contains('permission') || e.toString().contains('denied')) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('VPN permission was denied. Please enable VPN access in system settings.'),
-                action: SnackBarAction(
-                  label: 'Settings',
-                  onPressed: () {
-                    // Open system settings
-                    // Note: You'll need to implement platform-specific code to open settings
-                    // For Android: url_launcher can be used
-                    // For iOS: You can't programmatically open VPN settings
-                  },
-                ),
-              ),
-            );
+          String errorMessage = 'Failed to connect to VPN';
+          
+          // Add more detailed error information
+          if (e is PlatformException) {
+            errorMessage += '\nCode: ${e.code}';
+            errorMessage += '\nMessage: ${e.message}';
+            errorMessage += '\nDetails: ${e.details}';
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to connect to VPN: $e')),
-            );
+            errorMessage += '\nError: $e';
           }
+          Logger.error('Error message: $errorMessage');
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              duration: Duration(seconds: 5),
+              action: SnackBarAction(
+                label: 'Dismiss',
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                },
+              ),
+            ),
+          );
         }
         setState(() {
           _currentStage = VpnStage.disconnected;
@@ -398,14 +418,14 @@ Endpoint = ${session.endpoint}:${session.listenPort}
           listener: (context, state) {
             if (state is VpnConnected) {
               setState(() {
-                currentSession = state.session;
+                currentConnectionData = state.connectionData;
                 _currentStage = VpnStage.connecting;
               });
               // Start WireGuard connection after successful API call
-              _connectWireguard(state.session);
+              _connectWireguard(state.connectionData);
             } else if (state is VpnDisconnected) {
               setState(() {
-                currentSession = null;
+                currentConnectionData = null;
                 _currentStage = VpnStage.disconnecting;
               });
               _disconnectWireguard();
@@ -543,7 +563,7 @@ Endpoint = ${session.endpoint}:${session.listenPort}
                           builder: (context, state) {
                             String duration = '00.00.00';
                             if (state is VpnConnected) {
-                              final startTime = DateTime.parse(state.session.startTime);
+                              final startTime = DateTime.parse(state.connectionData.session.startTime);
                               final now = DateTime.now();
                               final diff = now.difference(startTime);
                               duration = "${diff.inHours.toString().padLeft(2, '0')}.${(diff.inMinutes % 60).toString().padLeft(2, '0')}.${(diff.inSeconds % 60).toString().padLeft(2, '0')}";

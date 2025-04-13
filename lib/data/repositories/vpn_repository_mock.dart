@@ -1,3 +1,5 @@
+import 'package:kamui_app/domain/entities/connection_data.dart';
+import 'package:kamui_app/domain/entities/pool.dart';
 import 'package:kamui_app/domain/entities/server.dart';
 import 'package:kamui_app/domain/entities/session.dart';
 import 'package:kamui_app/domain/repositories/vpn_repository.dart';
@@ -45,31 +47,47 @@ class VpnRepositoryMock implements VpnRepository {
   }
 
   @override
-  Future<Session> connect(int serverId) async {
+  Future<ConnectionData> connect(int serverId) async {
     // Simulate network delay
     await Future.delayed(Duration(seconds: 2));
     
     final now = DateTime.now();
-    final expiresAt = now.add(Duration(days: 30));
+    final expiresAt = now.add(Duration(minutes: 30));
     
-    return Session(
-      id: 1,
-      sessionId: 'mock-session-${now.millisecondsSinceEpoch}',
-      userId: 1,
-      serverId: serverId,
-      poolId: 1,
-      poolName: 'Default Pool',
-      privateKey: 'mock-private-key',
-      publicKey: 'mock-public-key',
-      endpoint: '192.168.1.1',
-      listenPort: 51820,
-      ipAddress: '10.0.0.2',
-      startTime: now.toIso8601String(),
-      endTime: null,
-      totalDuration: 0,
-      status: 'active',
-      createdAt: now.toIso8601String(),
-      expiresAt: expiresAt.toIso8601String(),
+    return ConnectionData(
+      pool: Pool(
+        id: 5,
+        name: 'utun00',
+        serverId: serverId,
+        publicKey: 'mock-public-key',
+        endpoint: '13.212.59.212',
+        persistentKeepalive: 25,
+        allowedIps: '0.0.0.0/0, ::/0',
+        presharedKey: '',
+        dns: '1.1.1.1',
+        createdAt: now.toIso8601String(),
+        updatedAt: now.toIso8601String(),
+      ),
+      session: Session(
+        id: 0,
+        sessionId: 'mock-session-${now.millisecondsSinceEpoch}',
+        userId: 10,
+        serverId: serverId,
+        poolId: 5,
+        poolName: 'utun00',
+        privateKey: 'mock-private-key',
+        publicKey: 'mock-public-key',
+        endpoint: '13.212.59.212',
+        listenPort: 51820,
+        ipAddress: '10.0.0.146/32',
+        startTime: now.toIso8601String(),
+        endTime: null,
+        lastActivity: now.toIso8601String(),
+        totalDuration: 0,
+        status: 'active',
+        createdAt: '0001-01-01T00:00:00Z',
+        expiresAt: expiresAt.toIso8601String(),
+      ),
     );
   }
 

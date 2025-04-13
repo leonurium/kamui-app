@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:kamui_app/core/config/constants.dart';
-import '../../core/network/api_client.dart';
-import '../../domain/repositories/vpn_repository.dart';
-import '../models/main_response.dart';
-import '../../domain/entities/server.dart';
-import '../../domain/entities/session.dart';
-import '../../core/utils/device_info.dart';
-import '../../core/utils/logger.dart';
+import 'package:kamui_app/domain/entities/connection_data.dart';
+import 'package:kamui_app/core/network/api_client.dart';
+import 'package:kamui_app/domain/repositories/vpn_repository.dart';
+import 'package:kamui_app/data/models/main_response.dart';
+import 'package:kamui_app/domain/entities/server.dart';
+import 'package:kamui_app/core/utils/device_info.dart';
+import 'package:kamui_app/core/utils/logger.dart';
 import 'vpn_repository_mock.dart';
 
 class VpnRepositoryImpl implements VpnRepository {
@@ -41,7 +41,7 @@ class VpnRepositoryImpl implements VpnRepository {
   }
 
   @override
-  Future<Session> connect(int serverId) async {
+  Future<ConnectionData> connect(int serverId) async {
     try {
       Logger.info('VpnRepository: Connecting to VPN with serverId: $serverId');
       final deviceId = await DeviceInfoUtil.getDeviceId();
@@ -57,9 +57,9 @@ class VpnRepositoryImpl implements VpnRepository {
       
       Logger.info('VpnRepository: API response: ${response.data}');
       
-      final mainResponse = MainResponse<Session>.fromJson(
+      final mainResponse = MainResponse<ConnectionData>.fromJson(
         response.data,
-        (data) => Session.fromJson(data),
+        (data) => ConnectionData.fromJson(data),
       );
       
       if (!mainResponse.success || mainResponse.data == null) {

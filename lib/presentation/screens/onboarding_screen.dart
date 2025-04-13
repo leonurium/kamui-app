@@ -73,9 +73,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       context.read<OnboardingBloc>().add(CompleteOnboarding());
     } catch (e) {
       Logger.error(e.toString());
+      // Show more detailed error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('VPN permission is required. Please grant permission when prompted.'),
+          content: Text('VPN permission is required. Please make sure you have granted VPN permissions in your device settings.'),
           action: SnackBarAction(
             label: 'Retry',
             onPressed: _requestVpnPermission,

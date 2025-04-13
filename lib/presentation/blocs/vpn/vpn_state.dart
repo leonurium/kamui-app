@@ -23,12 +23,12 @@ class VpnServersLoaded extends VpnState {
 class VpnConnecting extends VpnState {}
 
 class VpnConnected extends VpnState {
-  final Session session;
+  final ConnectionData connectionData;
 
-  const VpnConnected(this.session);
+  const VpnConnected(this.connectionData);
 
   @override
-  List<Object> get props => [session];
+  List<Object> get props => [connectionData];
 }
 
 class VpnDisconnecting extends VpnState {}

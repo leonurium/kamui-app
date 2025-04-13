@@ -12,6 +12,7 @@ class Session {
   final String ipAddress;
   final String startTime;
   final String? endTime;
+  final String lastActivity;
   final int totalDuration;
   final String status;
   final String createdAt;
@@ -31,6 +32,7 @@ class Session {
     required this.ipAddress,
     required this.startTime,
     this.endTime,
+    required this.lastActivity,
     required this.totalDuration,
     required this.status,
     required this.createdAt,
@@ -39,43 +41,45 @@ class Session {
 
   factory Session.fromJson(Map<String, dynamic> json) {
     return Session(
-      id: json['ID'] ?? 0,
-      sessionId: json['SessionID'] ?? '',
-      userId: json['UserID'] ?? 0,
-      serverId: json['ServerID'] ?? 0,
-      poolId: json['PoolID'] ?? 0,
-      poolName: json['PoolName'] ?? '',
-      privateKey: json['PrivateKey'] ?? '',
-      publicKey: json['PublicKey'] ?? '',
-      endpoint: json['Endpoint'] ?? '',
-      listenPort: json['ListenPort'] ?? 0,
-      ipAddress: json['IPAddress'] ?? '',
-      startTime: json['StartTime'] ?? '',
-      endTime: json['EndTime'],
-      totalDuration: json['TotalDuration'] ?? 0,
-      status: json['Status'] ?? '',
-      createdAt: json['CreatedAt'] ?? '',
-      expiresAt: json['ExpiresAt'] ?? '',
+      id: json['id'] ?? 0,
+      sessionId: json['session_id'] ?? '',
+      userId: json['user_id'] ?? 0,
+      serverId: json['server_id'] ?? 0,
+      poolId: json['pool_id'] ?? 0,
+      poolName: json['pool_name'] ?? '',
+      privateKey: json['private_key'] ?? '',
+      publicKey: json['public_key'] ?? '',
+      endpoint: json['endpoint'] ?? '',
+      listenPort: json['listen_port'] ?? 0,
+      ipAddress: json['ip_address'] ?? '',
+      startTime: json['start_time'] ?? '',
+      endTime: json['end_time'],
+      lastActivity: json['last_activity'] ?? '',
+      totalDuration: json['total_duration'] ?? 0,
+      status: json['status'] ?? '',
+      createdAt: json['created_at'] ?? '',
+      expiresAt: json['expires_at'] ?? '',
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'ID': id,
-    'SessionID': sessionId,
-    'UserID': userId,
-    'ServerID': serverId,
-    'PoolID': poolId,
-    'PoolName': poolName,
-    'PrivateKey': privateKey,
-    'PublicKey': publicKey,
-    'Endpoint': endpoint,
-    'ListenPort': listenPort,
-    'IPAddress': ipAddress,
-    'StartTime': startTime,
-    'EndTime': endTime,
-    'TotalDuration': totalDuration,
-    'Status': status,
-    'CreatedAt': createdAt,
-    'ExpiresAt': expiresAt,
+    'id': id,
+    'session_id': sessionId,
+    'user_id': userId,
+    'server_id': serverId,
+    'pool_id': poolId,
+    'pool_name': poolName,
+    'private_key': privateKey,
+    'public_key': publicKey,
+    'endpoint': endpoint,
+    'listen_port': listenPort,
+    'ip_address': ipAddress,
+    'start_time': startTime,
+    'end_time': endTime,
+    'last_activity': lastActivity,
+    'total_duration': totalDuration,
+    'status': status,
+    'created_at': createdAt,
+    'expires_at': expiresAt,
   };
 }
