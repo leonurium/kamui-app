@@ -15,6 +15,7 @@ class AdsRepositoryMock implements AdsRepository {
         mediaUrl: 'https://picsum.photos/400/600',
         clickUrl: 'https://example.com/special-offer',
         countdown: 5,
+        isAutoClicked: false,
       ),
       Ad(
         id: 2,
@@ -23,6 +24,7 @@ class AdsRepositoryMock implements AdsRepository {
         mediaUrl: 'https://example.com/video.mp4',
         clickUrl: 'https://example.com/new-features',
         countdown: 10,
+        isAutoClicked: false,
       ),
       Ad(
         id: 3,
@@ -31,6 +33,7 @@ class AdsRepositoryMock implements AdsRepository {
         mediaUrl: 'https://picsum.photos/400/600',
         clickUrl: 'https://example.com/upgrade',
         countdown: 8,
+        isAutoClicked: false,
       ),
     ];
   }

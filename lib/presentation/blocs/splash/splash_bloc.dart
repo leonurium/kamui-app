@@ -56,7 +56,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
 
       // Get and save ads
       final ads = await getAdsUseCase.execute();
-      if (!ads.isNotEmpty) {
+      if (ads.isNotEmpty) {
         await prefs.setString('ads', jsonEncode(
           ads.map((ad) => ad.toJson()).toList()
         ));
@@ -70,6 +70,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
             'media_url': 'https://short.rctiplus.id/vod-e5a2a2/sv/28c0e81d-194d9aa9fc8/28c0e81d-194d9aa9fc8.mp4',
             'click_url': 'https://example.com/premium',
             'countdown': 10,
+            'is_auto_clicked': false,
           },
           {
             'id': 2,
@@ -78,6 +79,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
             'media_url': 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
             'click_url': 'https://example.com/features',
             'countdown': 10,
+            'is_auto_clicked': false,
           }
         ];
         await prefs.setString('ads', jsonEncode(mockupAds));

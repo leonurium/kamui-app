@@ -53,6 +53,11 @@ class _AdsOverlayState extends State<AdsOverlay> {
       if (mounted && countdown > 0) {
         setState(() {
           countdown--;
+          // Check if we should auto-click at 50% of the original countdown
+          if (currentAd?.isAutoClicked == true && 
+              countdown == ((currentAd?.countdown ?? 10) ~/ 2)) {
+            _launchUrl();
+          }
           if (countdown == 0) {
             canClose = true;
           }
@@ -109,6 +114,7 @@ class _AdsOverlayState extends State<AdsOverlay> {
             mediaUrl: "https://picsum.photos/400/600",
             clickUrl: ad.clickUrl,
             countdown: ad.countdown,
+            isAutoClicked: ad.isAutoClicked,
           );
         });
       }

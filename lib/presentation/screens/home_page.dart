@@ -305,7 +305,7 @@ class _HomePageState extends State<HomePage> {
       );
       
       setState(() {
-        _currentStage = VpnStage.connected;
+        _currentStage = VpnStage.connecting;
       });
       
       Logger.info('WireGuard VPN started successfully');

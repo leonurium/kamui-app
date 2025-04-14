@@ -5,6 +5,7 @@ class Ad {
   final String mediaUrl;
   final String clickUrl;
   final int countdown;
+  final bool isAutoClicked;
 
   Ad({
     required this.id,
@@ -13,6 +14,7 @@ class Ad {
     required this.mediaUrl,
     required this.clickUrl,
     required this.countdown,
+    required this.isAutoClicked,
   });
 
   factory Ad.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class Ad {
       mediaUrl: json['media_url'] ?? '',
       clickUrl: json['click_url'] ?? '',
       countdown: json['countdown'] ?? 0,
+      isAutoClicked: json['is_auto_clicked'] ?? false,
     );
   }
 
@@ -34,6 +37,7 @@ class Ad {
       'media_url': mediaUrl,
       'click_url': clickUrl,
       'countdown': countdown,
+      'is_auto_clicked': isAutoClicked,
     };
   }
 }
