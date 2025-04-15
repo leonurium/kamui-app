@@ -1,38 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kamui_app/presentation/blocs/premium/premium_bloc.dart';
 import 'package:kamui_app/domain/entities/package.dart';
 import 'package:kamui_app/injection.dart' as di;
-import 'package:in_app_purchase/in_app_purchase.dart';
 
-class PremiumPage extends StatefulWidget {
+class PremiumPage extends StatelessWidget {
   const PremiumPage({Key? key}) : super(key: key);
-
-  @override
-  _PremiumPageState createState() => _PremiumPageState();
-}
-
-class _PremiumPageState extends State<PremiumPage> {
-  late PremiumBloc _premiumBloc;
-  final InAppPurchase _inAppPurchase = InAppPurchase.instance;
-
-  @override
-  void initState() {
-    super.initState();
-    _premiumBloc = di.sl<PremiumBloc>()..add(LoadPackages());
-  }
-
-  @override
-  void dispose() {
-    _premiumBloc.close();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => _premiumBloc,
+      create: (context) => di.sl<PremiumBloc>()..add(LoadPackages()),
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
@@ -48,22 +26,7 @@ class _PremiumPageState extends State<PremiumPage> {
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        body: BlocConsumer<PremiumBloc, PremiumState>(
-          listener: (context, state) {
-            if (state is PremiumError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message)),
-              );
-            } else if (state is PremiumPurchaseSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Purchase successful!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-              Navigator.pop(context);
-            }
-          },
+        body: BlocBuilder<PremiumBloc, PremiumState>(
           builder: (context, state) {
             if (state is PremiumLoading) {
               return Center(child: CircularProgressIndicator());
@@ -81,7 +44,7 @@ class _PremiumPageState extends State<PremiumPage> {
                     ),
                     SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: () => _premiumBloc.add(LoadPackages()),
+                      onPressed: () => context.read<PremiumBloc>().add(LoadPackages()),
                       child: Text('Retry'),
                     ),
                   ],
@@ -102,7 +65,7 @@ class _PremiumPageState extends State<PremiumPage> {
       children: [
         SizedBox(height: 16),
         SizedBox(
-          height: 500,
+          height: 500, // Fixed height for horizontal scroll
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: 16),
@@ -110,12 +73,9 @@ class _PremiumPageState extends State<PremiumPage> {
             itemBuilder: (context, index) {
               final package = packages[index];
               return Container(
-                width: 300,
+                width: 300, // Fixed width for each card
                 margin: EdgeInsets.only(right: 16),
-                child: _PackageCard(
-                  package: package,
-                  onPurchase: () => _handlePurchase(package),
-                ),
+                child: _PackageCard(package: package),
               );
             },
           ),
@@ -123,25 +83,12 @@ class _PremiumPageState extends State<PremiumPage> {
       ],
     );
   }
-
-  void _handlePurchase(Package package) {
-    _premiumBloc.add(PurchasePackage(
-      packageId: package.id,
-      purchaseToken: '', // This will be set by the repository
-      platform: defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android',
-    ));
-  }
 }
 
 class _PackageCard extends StatelessWidget {
   final Package package;
-  final VoidCallback onPurchase;
 
-  const _PackageCard({
-    Key? key,
-    required this.package,
-    required this.onPurchase,
-  }) : super(key: key);
+  const _PackageCard({Key? key, required this.package}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -243,7 +190,12 @@ class _PackageCard extends StatelessWidget {
                   ],
                 ),
                 ElevatedButton(
-                  onPressed: onPurchase,
+                  onPressed: () {
+                    // TODO: Implement purchase logic
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Purchase functionality coming soon!')),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color.fromRGBO(37, 112, 252, 1),
                     shape: RoundedRectangleBorder(
@@ -266,4 +218,4 @@ class _PackageCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

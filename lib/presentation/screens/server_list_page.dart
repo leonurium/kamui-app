@@ -77,11 +77,13 @@ class ServerListPage extends StatelessWidget {
                         itemCount: state.premiumServers.length,
                         itemBuilder: (_, index) {
                           final server = state.premiumServers[index];
+                          final pingResult = state.pingResults[server.id];
                           return ServerItemWidget(
                             isFaded: true,
-                            label: server.city,
+                            label: server.location,
                             icon: Icons.lock,
                             flagAsset: _getFlagAsset(server.country),
+                            pingResult: pingResult,
                             onTap: () {
                               context.read<ServerListBloc>().add(SelectServerEvent(server));
                             },
@@ -108,6 +110,7 @@ class ServerListPage extends StatelessWidget {
                         itemCount: state.freeServers.length,
                         itemBuilder: (_, index) {
                           final server = state.freeServers[index];
+                          final pingResult = state.pingResults[server.id];
                           return Material(
                             borderRadius: BorderRadius.circular(10),
                             color: Theme.of(context).cardColor,
@@ -117,22 +120,36 @@ class ServerListPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Wrap(
-                                    crossAxisAlignment: WrapCrossAlignment.center,
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 15,
-                                        backgroundColor: Colors.white,
-                                        backgroundImage: ExactAssetImage(
-                                          _getFlagAsset(server.country),
+                                  Expanded(
+                                    child: Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 15,
+                                          backgroundColor: Colors.white,
+                                          backgroundImage: ExactAssetImage(
+                                            _getFlagAsset(server.country),
+                                          ),
                                         ),
-                                      ),
-                                      SizedBox(width: 15),
-                                      Text(
-                                        server.city,
-                                        style: Theme.of(context).textTheme.bodyLarge,
-                                      ),
-                                    ],
+                                        SizedBox(width: 15),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              server.location,
+                                              style: Theme.of(context).textTheme.bodyLarge,
+                                            ),
+                                            if (pingResult != null)
+                                              Text(
+                                                '${pingResult.mbps.toStringAsFixed(1)} Mbps • ${pingResult.latency}ms',
+                                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                  color: pingResult.isOnline ? Colors.green : Colors.red,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                   RoundCheckBox(
                                     size: 24,

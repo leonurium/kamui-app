@@ -8,6 +8,7 @@ import 'package:wireguard_flutter/wireguard_flutter.dart';
 import 'package:wireguard_flutter/wireguard_flutter_platform_interface.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
 import 'package:kamui_app/core/utils/doodle_ipsum_utils.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -20,11 +21,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   final WireGuardFlutterInterface _wireguard = WireGuardFlutter.instance;
+  bool _hasAcceptedPrivacyPolicy = false;
+  bool _hasGrantedVpnPermission = false;
 
   final List<OnboardingPage> _pages = [
     OnboardingPage(
       title: 'Welcome to Gama VPN',
-      description: 'Secure your internet connection and protect your privacy with our fast and reliable VPN service.',
+      description: 'The internet was built for stationary computers, but today we\'re always on the move. Gama VPN replaces outdated connections with a modern, optimized protocol that keeps you secure and fast, wherever you are.',
       image: DoodleIpsumUtils.getImageUrl(
         width: 500,
         height: 500,
@@ -36,7 +39,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
     OnboardingPage(
       title: 'Privacy Policy',
-      description: 'We respect your privacy. Our service is designed to protect your data and keep your online activities private.',
+      description: 'Please review our privacy policy and terms of service before continuing.',
       image: DoodleIpsumUtils.getImageUrl(
         width: 500,
         height: 500,
@@ -58,6 +61,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
       color: Color.fromRGBO(37, 112, 252, 1),
     ),
+    OnboardingPage(
+      title: 'Ready to Start',
+      description: 'You\'re all set! Let\'s get started with Gama VPN.',
+      image: DoodleIpsumUtils.getImageUrl(
+        width: 500,
+        height: 500,
+        category: 'flat',
+        seed: 'start',
+        isRandom: false,
+      ),
+      color: Color.fromRGBO(37, 112, 252, 1),
+    ),
   ];
 
   @override
@@ -69,11 +84,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _requestVpnPermission() async {
     try {
       await _wireguard.initialize(interfaceName: "wg0");
-      // Permission granted, proceed to complete onboarding
-      context.read<OnboardingBloc>().add(CompleteOnboarding());
+      
+      setState(() {
+        _hasGrantedVpnPermission = true;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Permission has been granted. click grant permission again to continue'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     } catch (e) {
       Logger.error(e.toString());
-      // Show more detailed error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('VPN permission is required. Please make sure you have granted VPN permissions in your device settings.'),
@@ -88,13 +111,110 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _onNextPressed() {
     if (_currentPage < _pages.length - 1) {
-      _pageController.nextPage(
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      if (_currentPage == 2) {
+        if (_hasGrantedVpnPermission) {
+          _pageController.nextPage(
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        } else {
+          _requestVpnPermission();
+        }
+      } else {
+        _pageController.nextPage(
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
     } else {
-      _requestVpnPermission();
+      // Save onboarding completed state
+      context.read<OnboardingBloc>().add(CompleteOnboarding());
     }
+  }
+
+  Widget _buildPrivacyPolicyPage() {
+    return Container(
+      padding: EdgeInsets.only(top: 60, left: 16, right: 16, bottom: 40),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: WebViewWidget(
+            controller: WebViewController()
+              ..loadRequest(Uri.parse('https://getlorem.com/privacy-policy'))
+              ..setJavaScriptMode(JavaScriptMode.unrestricted),
+            ),
+          ),
+          SizedBox(height: 20),
+          Container(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _hasAcceptedPrivacyPolicy = false;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('You must accept the privacy policy to continue.'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  child: Text('Decline'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_hasAcceptedPrivacyPolicy) {
+                      _onNextPressed();
+                    } else {
+                      setState(() {
+                        _hasAcceptedPrivacyPolicy = true;
+                      });
+                      _onNextPressed();
+                    }
+                  },
+                  child: Text('Accept'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavigationButton() {
+    if (_currentPage == 1) {
+      return SizedBox(height: 40); // Hide button on privacy policy page
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: ElevatedButton(
+        onPressed: _onNextPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _pages[_currentPage].color,
+          minimumSize: Size(double.infinity, 50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+        ),
+        child: Text(
+          _currentPage == _pages.length - 1 
+              ? 'Start' 
+              : _currentPage == 2 
+                  ? 'Grant Permission' 
+                  : 'Next',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -115,12 +235,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             PageView.builder(
               controller: _pageController,
               itemCount: _pages.length,
+              physics: NeverScrollableScrollPhysics(),
               onPageChanged: (int page) {
                 setState(() {
                   _currentPage = page;
                 });
               },
               itemBuilder: (context, index) {
+                if (index == 1) {
+                  return _buildPrivacyPolicyPage();
+                }
                 return OnboardingPageView(page: _pages[index]);
               },
             ),
@@ -148,27 +272,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: ElevatedButton(
-                      onPressed: _onNextPressed,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _pages[_currentPage].color,
-                        minimumSize: Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                      ),
-                      child: Text(
-                        _currentPage == _pages.length - 1 ? 'Grant Permission' : 'Next',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
+                  _buildNavigationButton(),
                 ],
               ),
             ),

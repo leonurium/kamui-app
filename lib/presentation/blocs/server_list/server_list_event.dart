@@ -16,4 +16,17 @@ class SelectServerEvent extends ServerListEvent {
 
   @override
   List<Object> get props => [server];
-} 
+}
+
+class PingServersEvent extends ServerListEvent {
+  final List<Server> servers;
+
+  const PingServersEvent(this.servers);
+
+  @override
+  List<Object> get props => [servers];
+}
+
+class StartPingTimerEvent extends ServerListEvent {}
+
+class StopPingTimerEvent extends ServerListEvent {} 

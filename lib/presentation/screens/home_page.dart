@@ -581,8 +581,9 @@ class _HomePageState extends State<HomePage> {
                         ),
                       SizedBox(height: 25),
                       ServerItemWidget(
+                        isFaded: false,
                         flagAsset: 'assets/logo.png',
-                        label: server?.country ?? 'No sever selected',
+                        label: server?.location ?? 'No sever selected',
                         icon: Icons.arrow_forward_ios,
                         onTap: () async {
                           final res = await Navigator.of(context)

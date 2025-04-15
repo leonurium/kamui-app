@@ -1,60 +1,73 @@
 import 'package:flutter/material.dart';
+import 'package:kamui_app/domain/entities/ping_result.dart';
 
 class ServerItemWidget extends StatelessWidget {
-  const ServerItemWidget(
-      {Key? key,
-      required this.label,
-      required this.icon,
-      required this.flagAsset,
-      required this.onTap,
-      this.isFaded = false})
-      : super(key: key);
-
+  final bool isFaded;
   final String label;
   final IconData icon;
   final String flagAsset;
+  final PingResult? pingResult;
   final VoidCallback onTap;
-  final isFaded;
+
+  const ServerItemWidget({
+    Key? key,
+    required this.isFaded,
+    required this.label,
+    required this.icon,
+    required this.flagAsset,
+    this.pingResult,
+    required this.onTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
+    return Material(
       borderRadius: BorderRadius.circular(10),
-      child: Material(
+      color: Theme.of(context).cardColor,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(10),
-        color: Theme.of(context).cardColor,
         child: Padding(
-          padding: const EdgeInsets.all(10.0),
+          padding: const EdgeInsets.all(7.0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 15,
-                    backgroundColor: Colors.white,
-                    backgroundImage: ExactAssetImage(
-                      flagAsset,
+              Expanded(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 15,
+                      backgroundColor: Colors.white,
+                      backgroundImage: ExactAssetImage(flagAsset),
                     ),
-                  ),
-                  SizedBox(
-                    width: 15,
-                  ),
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ],
+                    SizedBox(width: 15),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: isFaded ? Colors.grey : null,
+                          ),
+                        ),
+                        if (pingResult != null)
+                          Text(
+                            '${pingResult!.mbps.toStringAsFixed(1)} Mbps • ${pingResult!.latency}ms',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: pingResult!.isOnline ? Colors.green : Colors.red,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              IconButton(
-                icon: Icon(icon),
-                onPressed: onTap,
-                iconSize: 18,
-                color: isFaded ? Colors.grey : Theme.of(context).iconTheme.color,
-              )
+              Icon(
+                icon,
+                color: isFaded ? Colors.grey : null,
+              ),
             ],
           ),
         ),

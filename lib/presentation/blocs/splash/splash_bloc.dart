@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:kamui_app/core/config/constants.dart';
 import 'package:kamui_app/core/utils/device_info.dart';
 import 'package:kamui_app/domain/usecases/get_servers_usecase.dart';
 import 'package:kamui_app/domain/usecases/get_ads_usecase.dart';
@@ -46,21 +47,13 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
       // Save device data safely
       await prefs.setString('device_data', jsonEncode(deviceData.toJson()));
 
-      // Get and save servers
-      final servers = await getServersUseCase.execute();
-      if (servers.isNotEmpty) {
-        await prefs.setString('servers', jsonEncode(
-          servers.map((server) => server.toJson()).toList()
-        ));
-      }
-
       // Get and save ads
       final ads = await getAdsUseCase.execute();
       if (ads.isNotEmpty) {
         await prefs.setString('ads', jsonEncode(
           ads.map((ad) => ad.toJson()).toList()
         ));
-      } else {
+      } else if (Constants.isUseMockData) {
         // Add mockup ads if no ads from server
         final mockupAds = [
           {

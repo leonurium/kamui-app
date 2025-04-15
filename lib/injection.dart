@@ -12,7 +12,6 @@ import 'data/repositories/auth_repository_impl.dart';
 import 'data/repositories/vpn_repository_impl.dart';
 import 'data/repositories/premium_repository_impl.dart';
 import 'data/repositories/ads_repository_impl.dart';
-import 'data/repositories/in_app_purchase_repository.dart';
 import 'domain/repositories/auth_repository.dart';
 import 'domain/repositories/vpn_repository.dart';
 import 'domain/repositories/premium_repository.dart';
@@ -26,6 +25,7 @@ import 'domain/usecases/purchase_package_usecase.dart';
 import 'domain/usecases/get_payment_histories_usecase.dart';
 import 'domain/usecases/get_ads_usecase.dart';
 import 'presentation/blocs/server_list/server_list_bloc.dart';
+import 'core/services/ping_service.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -33,9 +33,10 @@ Future<void> init() async {
   try {
     // Core
     sl.registerLazySingleton<ApiClient>(() => ApiClient());
+    sl.registerLazySingleton<PingService>(() => PingService());
     
     // Initialize SharedPreferences
-    SharedPreferences.setMockInitialValues({});  // For testing/initialization
+    // SharedPreferences.setMockInitialValues({});  // For testing/initialization
     final prefs = await SharedPreferences.getInstance();
     sl.registerSingleton<SharedPreferences>(prefs);
 
@@ -44,7 +45,6 @@ Future<void> init() async {
     sl.registerLazySingleton<VpnRepository>(() => VpnRepositoryImpl(sl()));
     sl.registerLazySingleton<PremiumRepository>(() => PremiumRepositoryImpl(sl()));
     sl.registerLazySingleton<AdsRepository>(() => AdsRepositoryImpl(sl()));
-    sl.registerLazySingleton<InAppPurchaseRepository>(() => InAppPurchaseRepository());
 
     // Use cases
     sl.registerLazySingleton<RegisterDeviceUseCase>(() => RegisterDeviceUseCase(sl()));
@@ -69,15 +69,19 @@ Future<void> init() async {
       registerDeviceUseCase: sl<RegisterDeviceUseCase>(),
     ));
 
-    sl.registerFactory<ServerListBloc>(() => ServerListBloc(sl<SharedPreferences>()));
+    sl.registerFactory<ServerListBloc>(() => ServerListBloc(
+      sl<SharedPreferences>(),
+      sl<GetServersUseCase>(),
+      sl<PingService>(),
+    ));
 
     sl.registerFactory<PremiumBloc>(() => PremiumBloc(
-      getPackagesUseCase: GetPackagesUseCase(sl<InAppPurchaseRepository>()),
-      purchasePackageUseCase: PurchasePackageUseCase(sl<InAppPurchaseRepository>()),
+      getPackagesUseCase: sl<GetPackagesUseCase>(),
+      purchasePackageUseCase: sl<PurchasePackageUseCase>(),
     ));
 
     // Onboarding bloc
-    sl.registerFactory<OnboardingBloc>(() => OnboardingBloc(prefs: sl<SharedPreferences>()));
+    sl.registerLazySingleton<OnboardingBloc>(() => OnboardingBloc(prefs: sl<SharedPreferences>()));
   } catch (e) {
     Logger.error('Error in dependency injection: $e');
     rethrow;

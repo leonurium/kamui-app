@@ -5,6 +5,7 @@ class Server {
   final String country;
   final bool isLocked;
   final bool isPremium;
+  final String location;
 
   Server({
     required this.id,
@@ -13,6 +14,8 @@ class Server {
     required this.country,
     required this.isLocked,
     required this.isPremium,
+    required this.location,
+
   });
 
   factory Server.fromJson(Map<String, dynamic> json) {
@@ -23,6 +26,7 @@ class Server {
       country: json['country'] ?? '',
       isLocked: json['is_locked'] ?? false,
       isPremium: json['is_premium'] ?? false,
+      location: json['location'] ?? '',
     );
   }
 
@@ -34,6 +38,7 @@ class Server {
       'country': country,
       'is_locked': isLocked,
       'is_premium': isPremium,
+      'location': location,
     };
   }
 }
