@@ -270,7 +270,7 @@ class _HomePageState extends State<HomePage> {
       config += '\nAddress = ${connectionData.session.ipAddress}';
       config += '\nDNS = ${connectionData.pool.dns}';
       config += '\n[Peer]';
-      config += '\nPublicKey = ${connectionData.session.publicKey}';
+      config += '\nPublicKey = ${connectionData.pool.publicKey}';
       
       config += '\nAllowedIPs = ${connectionData.pool.allowedIps}';
       config += '\nPersistentKeepalive = ${connectionData.pool.persistentKeepalive}';
