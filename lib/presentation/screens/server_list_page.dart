@@ -11,9 +11,14 @@ class ServerListPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => di.sl<ServerListBloc>()..add(LoadServersEvent()),
       child: BlocListener<ServerListBloc, ServerListState>(
+        listenWhen: (previous, current) => previous != current,
         listener: (context, state) {
-          if (state is ServerListLoaded && state.selectedServer != null) {
-            Navigator.of(context).pop(state.selectedServer);
+          if (state is ServerListLoaded) {
+            if (state.selectedServer != null) {
+              Navigator.of(context).pop(state.selectedServer);
+            }
+            // Start the ping timer when servers are loaded
+            context.read<ServerListBloc>().add(StartPingTimerEvent());
           }
         },
         child: BlocBuilder<ServerListBloc, ServerListState>(
@@ -45,6 +50,8 @@ class ServerListPage extends StatelessWidget {
             if (state is ServerListLoaded) {
               return WillPopScope(
                 onWillPop: () async {
+                  // Stop the ping timer when leaving the page
+                  context.read<ServerListBloc>().add(StopPingTimerEvent());
                   Navigator.of(context).pop(state.selectedServer);
                   return true;
                 },
