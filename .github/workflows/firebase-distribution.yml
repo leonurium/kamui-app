@@ -81,12 +81,6 @@ jobs:
             ./gradlew assembleDebug --stacktrace --info
             exit 1
           fi
-
-  distribute-android:
-    needs: build-android
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       
       - name: Firebase App Distribution - Android
         uses: wzieba/Firebase-Distribution-Github-Action@v1
