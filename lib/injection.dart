@@ -12,6 +12,7 @@ import 'data/repositories/auth_repository_impl.dart';
 import 'data/repositories/vpn_repository_impl.dart';
 import 'data/repositories/premium_repository_impl.dart';
 import 'data/repositories/ads_repository_impl.dart';
+import 'data/repositories/in_app_purchase_repository.dart';
 import 'domain/repositories/auth_repository.dart';
 import 'domain/repositories/vpn_repository.dart';
 import 'domain/repositories/premium_repository.dart';
@@ -43,6 +44,7 @@ Future<void> init() async {
     sl.registerLazySingleton<VpnRepository>(() => VpnRepositoryImpl(sl()));
     sl.registerLazySingleton<PremiumRepository>(() => PremiumRepositoryImpl(sl()));
     sl.registerLazySingleton<AdsRepository>(() => AdsRepositoryImpl(sl()));
+    sl.registerLazySingleton<InAppPurchaseRepository>(() => InAppPurchaseRepository());
 
     // Use cases
     sl.registerLazySingleton<RegisterDeviceUseCase>(() => RegisterDeviceUseCase(sl()));
@@ -70,8 +72,8 @@ Future<void> init() async {
     sl.registerFactory<ServerListBloc>(() => ServerListBloc(sl<SharedPreferences>()));
 
     sl.registerFactory<PremiumBloc>(() => PremiumBloc(
-      getPackagesUseCase: sl<GetPackagesUseCase>(),
-      purchasePackageUseCase: sl<PurchasePackageUseCase>(),
+      getPackagesUseCase: GetPackagesUseCase(sl<InAppPurchaseRepository>()),
+      purchasePackageUseCase: PurchasePackageUseCase(sl<InAppPurchaseRepository>()),
     ));
 
     // Onboarding bloc
