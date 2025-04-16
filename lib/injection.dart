@@ -27,8 +27,10 @@ import 'domain/usecases/get_payment_histories_usecase.dart';
 import 'domain/usecases/get_ads_usecase.dart';
 import 'presentation/blocs/server_list/server_list_bloc.dart';
 import 'core/services/ping_service.dart';
+import 'core/services/wireguard_service.dart';
+import 'presentation/blocs/ads/ads_bloc.dart';
 
-final GetIt sl = GetIt.instance;
+final sl = GetIt.instance;
 
 Future<void> init() async {
   try {
@@ -59,6 +61,11 @@ Future<void> init() async {
     sl.registerLazySingleton<GetPaymentHistoriesUseCase>(() => GetPaymentHistoriesUseCase(sl()));
     sl.registerLazySingleton<GetAdsUseCase>(() => GetAdsUseCase(sl()));
 
+    // Services
+    sl.registerLazySingleton<WireGuardService>(
+      () => WireGuardService(),
+    );
+
     // blocs
     sl.registerLazySingleton<VpnBloc>(() => VpnBloc(
       sl<GetServersUseCase>(),
@@ -85,6 +92,9 @@ Future<void> init() async {
 
     // Onboarding bloc
     sl.registerLazySingleton<OnboardingBloc>(() => OnboardingBloc(prefs: sl<SharedPreferences>()));
+
+    // Ads bloc
+    sl.registerFactory<AdsBloc>(() => AdsBloc());
   } catch (e) {
     Logger.error('Error in dependency injection: $e');
     rethrow;

@@ -95,4 +95,15 @@ class WireGuardService {
 
     return config;
   }
+
+  Future<bool> isConnected() async {
+    try {
+      // Get the current stage from the stream
+      final isConnected = await _wireguard.isConnected();
+      return isConnected;
+    } catch (e) {
+      Logger.error('Error checking WireGuard connection status: $e');
+      return false;
+    }
+  }
 } 

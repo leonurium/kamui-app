@@ -44,7 +44,13 @@ class _AdsOverlayState extends State<AdsOverlay> {
           _initializeVideo();
         }
         _startCountdown();
+      } else {
+        // If no ads available, close the overlay immediately
+        widget.onClose();
       }
+    } else {
+      // If no ads data in preferences, close the overlay immediately
+      widget.onClose();
     }
   }
 
