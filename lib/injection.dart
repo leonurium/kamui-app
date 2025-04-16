@@ -1,5 +1,6 @@
 // lib/injection.dart
 import 'package:get_it/get_it.dart';
+import 'package:kamui_app/core/config/constants.dart';
 import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
 import 'package:kamui_app/presentation/blocs/splash/splash_bloc.dart';
@@ -36,7 +37,9 @@ Future<void> init() async {
     sl.registerLazySingleton<PingService>(() => PingService());
     
     // Initialize SharedPreferences
-    // SharedPreferences.setMockInitialValues({});  // For testing/initialization
+    if (Constants.isUseMockData) {
+      SharedPreferences.setMockInitialValues({});  // For testing/initialization
+    }
     final prefs = await SharedPreferences.getInstance();
     sl.registerSingleton<SharedPreferences>(prefs);
 

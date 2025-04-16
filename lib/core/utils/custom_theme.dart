@@ -13,11 +13,11 @@ ThemeData customLightTheme(
       primaryColor: Colors.white,
       primaryIconTheme: IconThemeData(color: Colors.black),
       floatingActionButtonTheme:
-          FloatingActionButtonThemeData(backgroundColor: Color.fromRGBO(37, 112, 252, 1)),
+          FloatingActionButtonThemeData(backgroundColor: Color.fromARGB(255, 26, 48, 85)),
       unselectedWidgetColor: Colors.grey,
       brightness: Brightness.light,
       fontFamily: GoogleFonts.montserrat().fontFamily,
-      secondaryHeaderColor: Color.fromRGBO(37, 112, 252, 1),
+      secondaryHeaderColor: Color.fromARGB(255, 26, 48, 85),
       cardColor: Color.fromRGBO(239, 242, 248, 1),
       iconTheme: IconThemeData(color: Colors.black),
       tabBarTheme: TabBarTheme(
@@ -40,7 +40,7 @@ ThemeData customLightTheme(
             labelLarge: TextStyle(color: Colors.black, fontSize: 16),
           ),
       dividerColor: Colors.grey,
-      textSelectionTheme: TextSelectionThemeData(cursorColor: Color.fromRGBO(37, 112, 252, 1)));
+      textSelectionTheme: TextSelectionThemeData(cursorColor: Color.fromARGB(255, 26, 48, 85)));
 }
 
 ///dark theme
@@ -63,7 +63,7 @@ ThemeData customDarkTheme(
       tabBarTheme: TabBarTheme(
         unselectedLabelColor: Colors.white.withValues(alpha: .7),
       ),
-      appBarTheme: AppBarTheme(elevation: 0, color: Colors.black,iconTheme: IconThemeData(color: Colors.white) ),
+      appBarTheme: AppBarTheme(elevation: 0, color: Color.fromARGB(255, 26, 48, 85),iconTheme: IconThemeData(color: Colors.white) ),
       textTheme: Typography.material2018(platform: defaultTargetPlatform).white.copyWith(
             bodyLarge: TextStyle(color: Colors.white, fontSize: 16),
             bodyMedium: TextStyle(color: Colors.white, fontSize: 14),

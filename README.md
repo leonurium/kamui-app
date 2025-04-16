@@ -71,7 +71,6 @@ lib/
 - user agreement
 - onboarding page?
 - set default servers
-- desain, warna, background
 
 ads
 - first load showing ads

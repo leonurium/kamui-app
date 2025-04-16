@@ -163,8 +163,8 @@ class ServerListPage extends StatelessWidget {
                                     checkedWidget: const Icon(Icons.check, size: 18, color: Colors.white),
                                     borderColor: server == state.selectedServer
                                         ? Theme.of(context).scaffoldBackgroundColor
-                                        : Color.fromRGBO(37, 112, 252, 1),
-                                    checkedColor: Color.fromRGBO(37, 112, 252, 1),
+                                        : Color.fromARGB(255, 26, 48, 85),
+                                    checkedColor: Color.fromARGB(255, 26, 48, 85),
                                     isChecked: server == state.selectedServer,
                                     onTap: (x) {
                                       context.read<ServerListBloc>().add(SelectServerEvent(server));

@@ -9,9 +9,9 @@ env:
   SECRET_KEY: ${{ secrets.SECRET_KEY }}
   BASE_URL: ${{ secrets.BASE_URL }}
   API_KEY: ${{ secrets.API_KEY }}
-  NETWORK_LOGGER: false
-  USE_MOCK_DATA: false
-  FORCE_BLOCK_ADS: false
+  NETWORK_LOGGER: ${{ secrets.NETWORK_LOGGER }}
+  USE_MOCK_DATA: ${{ secrets.USE_MOCK_DATA }}
+  FORCE_BLOCK_ADS: ${{ secrets.FORCE_BLOCK_ADS }}
 
 jobs:
   validate-version:
@@ -53,9 +53,9 @@ jobs:
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" > .env
           echo "BASE_URL=${{ secrets.BASE_URL }}" >> .env
           echo "API_KEY=${{ secrets.API_KEY }}" >> .env
-          echo "NETWORK_LOGGER=false" >> .env
-          echo "USE_MOCK_DATA=false" >> .env
-          echo "FORCE_BLOCK_ADS=false" >> .env
+          echo "NETWORK_LOGGER=${{ secrets.NETWORK_LOGGER }}" >> .env
+          echo "USE_MOCK_DATA=${{ secrets.USE_MOCK_DATA }}" >> .env
+          echo "FORCE_BLOCK_ADS=${{ secrets.FORCE_BLOCK_ADS }}" >> .env
       
       - name: Install dependencies
         run: flutter pub get

@@ -35,7 +35,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         seed: 'welcome',
         isRandom: false,
       ),
-      color: Color.fromRGBO(37, 112, 252, 1),
     ),
     OnboardingPage(
       title: 'Privacy Policy',
@@ -47,7 +46,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         seed: 'privacy',
         isRandom: false,
       ),
-      color: Color.fromRGBO(37, 112, 252, 1),
     ),
     OnboardingPage(
       title: 'VPN Permission',
@@ -59,7 +57,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         seed: 'vpn',
         isRandom: false,
       ),
-      color: Color.fromRGBO(37, 112, 252, 1),
     ),
     OnboardingPage(
       title: 'Ready to Start',
@@ -71,7 +68,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         seed: 'start',
         isRandom: false,
       ),
-      color: Color.fromRGBO(37, 112, 252, 1),
     ),
   ];
 
@@ -195,7 +191,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: ElevatedButton(
         onPressed: _onNextPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: _pages[_currentPage].color,
+          backgroundColor: Color.fromARGB(255, 26, 48, 85),
           minimumSize: Size(double.infinity, 50),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(25),
@@ -265,7 +261,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: _currentPage == index
-                              ? _pages[index].color
+                              ? Color.fromARGB(255, 26, 48, 85)
                               : Colors.grey[300],
                         ),
                       ),
@@ -287,13 +283,11 @@ class OnboardingPage {
   final String title;
   final String description;
   final String image;
-  final Color color;
 
   OnboardingPage({
     required this.title,
     required this.description,
-    required this.image,
-    required this.color,
+    required this.image
   });
 }
 
@@ -320,7 +314,7 @@ class OnboardingPageView extends StatelessWidget {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: page.color,
+              color: Theme.of(context).textTheme.titleLarge!.color,
             ),
             textAlign: TextAlign.center,
           ),
@@ -329,7 +323,7 @@ class OnboardingPageView extends StatelessWidget {
             page.description,
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey[600],
+              color: Theme.of(context).textTheme.bodyMedium!.color,
             ),
             textAlign: TextAlign.center,
           ),

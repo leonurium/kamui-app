@@ -98,7 +98,7 @@ class _PackageCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: package.isPopular
-            ? BorderSide(color: Color.fromRGBO(37, 112, 252, 1), width: 2)
+            ? BorderSide(color: Color.fromARGB(255, 26, 48, 85), width: 2)
             : BorderSide.none,
       ),
       child: Container(
@@ -116,12 +116,12 @@ class _PackageCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.star, color: Color.fromRGBO(37, 112, 252, 1), size: 16),
+                    Icon(Icons.star, color: Theme.of(context).textTheme.bodyLarge!.color, size: 16),
                     SizedBox(width: 4),
                     Text(
                       'Most Popular',
                       style: TextStyle(
-                        color: Color.fromRGBO(37, 112, 252, 1),
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -175,7 +175,7 @@ class _PackageCard extends StatelessWidget {
                     Text(
                       '${package.priceAfterDiscount.toStringAsFixed(2)} ${package.currency}',
                       style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                        color: Color.fromRGBO(37, 112, 252, 1),
+                        color: Theme.of(context).textTheme.titleLarge!.color,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -197,14 +197,14 @@ class _PackageCard extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color.fromRGBO(37, 112, 252, 1),
+                    backgroundColor: Color.fromARGB(255, 26, 48, 85),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   ),
                   child: Text(
-                    'Get Started',
+                    'Buy Now',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,

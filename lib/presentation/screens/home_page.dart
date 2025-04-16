@@ -283,13 +283,6 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       children: [
                         SizedBox(height: 25),
-                        Center(
-                          child: Text(
-                            ConnectionStateUtils.getConnectionState(_currentStage),
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                        ),
-                        SizedBox(height: 8),
                         FutureBuilder<List<NetworkInterface>>(
                           future: NetworkInterface.list(),
                           builder: (context, snapshot) {
@@ -299,7 +292,7 @@ class _HomePageState extends State<HomePage> {
                               child: Text(
                                 ip,
                                 style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                                  color: ConnectionStateUtils.getConnectionColor(_currentStage),
+                                  color: Theme.of(context).textTheme.bodyLarge!.color,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -326,9 +319,7 @@ class _HomePageState extends State<HomePage> {
                           child: Text(
                             ConnectionStateUtils.getConnectionDescription(_currentStage),
                             style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                              color: _currentStage == VpnStage.connected 
-                                ? Color.fromRGBO(37, 112, 252, 1)
-                                : Theme.of(context).textTheme.bodyLarge!.color,
+                              color: Theme.of(context).textTheme.bodyLarge!.color
                             ),
                           ),
                         ),
@@ -349,7 +340,7 @@ class _HomePageState extends State<HomePage> {
                                   duration,
                                   style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: Color.fromRGBO(37, 112, 252, 1),
+                                    color: Theme.of(context).textTheme.bodyMedium!.color,
                                   ),
                                 ),
                               );
@@ -384,7 +375,7 @@ class _HomePageState extends State<HomePage> {
                               vertical: 15,
                               horizontal: MediaQuery.of(context).size.width / 4.5,
                             ),
-                            backgroundColor: Color.fromRGBO(37, 112, 252, 1),
+                            backgroundColor: Color.fromARGB(255, 26, 48, 85),
                           ),
                           onPressed: () {
                             Navigator.of(context).push(
