@@ -62,8 +62,6 @@ lib/
 │── theme.dart             # Global themes
 
 
-- ads should be have auto click, settings by cms
-- logo app is it already fix?
 - add field for flag country image
 - apakah timer waktu di hilangkan di halaman home page?
 - update package entities
@@ -72,6 +70,8 @@ lib/
 - marketing page
 - user agreement
 - onboarding page?
+- set default servers
+- desain, warna, background
 
 ads
 - first load showing ads
