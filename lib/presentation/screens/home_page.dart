@@ -328,13 +328,12 @@ class _HomePageState extends State<HomePage> {
                 body: Stack(
                   children: [
                     Positioned(
-                      top: 50,
                       child: Opacity(
                         opacity: .1,
                         child: Image.asset(
                           'assets/background.png',
                           fit: BoxFit.fill,
-                          height: MediaQuery.of(context).size.height / 1.5,
+                          color: Theme.of(context).textTheme.bodyLarge!.color,
                         ),
                       ),
                     ),

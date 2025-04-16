@@ -64,19 +64,12 @@ lib/
 
 - add field for flag country image
 - apakah timer waktu di hilangkan di halaman home page?
-- update package entities
 - privacy policy
 - support page
 - marketing page
 - user agreement
-- onboarding page?
-- set default servers
 
-ads
-- first load showing ads
-- before connect showing ads
 - after limit time, showing ads
-- want disconnect? showing ads
 
   # build-ios:
   #   needs: validate-version
