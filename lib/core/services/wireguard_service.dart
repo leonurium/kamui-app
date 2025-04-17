@@ -103,6 +103,8 @@ class WireGuardService {
       return isConnected;
     } catch (e) {
       Logger.error('Error checking WireGuard connection status: $e');
+      Logger.error('Error type: ${e.runtimeType}');
+      Logger.error('Error stack trace: ${StackTrace.current}');
       return false;
     }
   }

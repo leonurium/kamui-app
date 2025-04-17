@@ -14,6 +14,7 @@ import 'package:kamui_app/domain/entities/device.dart';
 import 'package:kamui_app/domain/usecases/get_servers_usecase.dart';
 import 'package:kamui_app/presentation/screens/server_list_page.dart';
 import 'package:kamui_app/presentation/screens/premium_page.dart';
+import 'package:kamui_app/presentation/screens/subscription_page.dart';
 import 'package:flutter/material.dart';
 import 'package:wireguard_flutter/wireguard_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -95,13 +96,9 @@ class _HomePageState extends State<HomePage> {
       di.sl<GetServersUseCase>(),
       di.sl<PingService>(),
     );
-    
-    Logger.info('HomePage: Initializing with VpnBloc: ${widget.vpnBloc}');
-    
+        
     if (!widget.vpnBloc.isClosed) {
       widget.vpnBloc.add(vpn.LoadServersEvent());
-    } else {
-      Logger.error('HomePage: VpnBloc is closed during initialization');
     }
     
     _initWireguard();
@@ -174,8 +171,6 @@ class _HomePageState extends State<HomePage> {
     }
     
     if (!mounted) return;
-
-    Logger.info('on _handleVpnConnection');
     
     setState(() {
       _isConnecting = true;  // Set connecting state before showing ads
@@ -217,21 +212,14 @@ class _HomePageState extends State<HomePage> {
     
     if (!mounted) return;
 
-    Logger.info('HomePage: Ads closed, current VpnBloc: ${widget.vpnBloc}');
-    
     // Check if bloc is closed
     if (widget.vpnBloc.isClosed) {
-      Logger.error('HomePage: VpnBloc is closed, cannot add events');
       return;
     }
     
     if (_isConnecting) {
       if (server != null) {
-        Logger.info('HomePage: Connecting to VPN with server: $server');
-        // Show loading indicator
         _showLoadingSnackBar('Connecting to VPN...');
-        
-        // Add connect event to bloc
         widget.vpnBloc.add(vpn.ConnectVpnEvent(server!.id));
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -240,11 +228,7 @@ class _HomePageState extends State<HomePage> {
       }
     } else {
       if (currentConnectionData != null) {
-        Logger.info('HomePage: Disconnecting from VPN with session: $currentConnectionData');
-        // Show loading indicator
         _showLoadingSnackBar('Disconnecting from VPN...');
-        
-        // Add disconnect event to bloc
         widget.vpnBloc.add(vpn.DisconnectVpnEvent(
           sessionId: currentConnectionData!.session.sessionId,
           serverLocation: currentConnectionData!.session.serverId.toString(),
@@ -439,7 +423,7 @@ class _HomePageState extends State<HomePage> {
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) => const PremiumPage(),
+                                  builder: (context) => const SubscriptionPage(),
                                 ),
                               );
                             },

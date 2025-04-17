@@ -1,6 +1,5 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/core/services/analytics_service.dart';
 import 'package:kamui_app/domain/entities/connection_data.dart';
 import 'package:kamui_app/domain/entities/server.dart';
@@ -61,11 +60,9 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
     ConnectVpnEvent event,
     Emitter<VpnState> emit,
   ) async {
-    Logger.info('VpnBloc: Connecting to VPN with serverId: ${event.serverId}');
     emit(VpnConnecting());
     try {
       final connectionData = await _connectVpnUseCase.execute(event.serverId);
-      Logger.info('VpnBloc: Successfully connected to VPN. connectionData: $connectionData');
       _connectionStartTime = DateTime.now();
       _currentServerLocation = connectionData.session.poolName; // Using poolName as server location
       _currentProtocol = 'WireGuard'; // Assuming WireGuard protocol
@@ -88,7 +85,6 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
         },
       );
     } catch (e) {
-      Logger.error('VpnBloc: Failed to connect to VPN: $e');
       emit(VpnError(e.toString()));
       
       // Track connection failure
@@ -104,12 +100,10 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
     DisconnectVpnEvent event,
     Emitter<VpnState> emit,
   ) async {
-    Logger.info('VpnBloc: Disconnecting from VPN with sessionId: ${event.sessionId}');
     emit(VpnDisconnecting());
     try {
       final success = await _disconnectVpnUseCase.execute(event.sessionId);
       if (success) {
-        Logger.info('VpnBloc: Successfully disconnected from VPN');
         emit(VpnDisconnected());
         
         // Calculate connection duration
@@ -141,7 +135,6 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
         _currentServerLocation = null;
         _currentProtocol = null;
       } else {
-        Logger.error('VpnBloc: Failed to disconnect from VPN');
         emit(VpnError('Failed to disconnect'));
         
         // Track disconnection failure
@@ -152,7 +145,6 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
         );
       }
     } catch (e) {
-      Logger.error('VpnBloc: Error disconnecting from VPN: $e');
       emit(VpnError(e.toString()));
       
       // Track disconnection error

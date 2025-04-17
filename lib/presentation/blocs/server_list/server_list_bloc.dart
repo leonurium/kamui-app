@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:kamui_app/core/config/constants.dart';
 import 'package:kamui_app/core/utils/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
@@ -132,7 +133,9 @@ class ServerListBloc extends Bloc<ServerListEvent, ServerListState> {
     // Ping all servers in parallel
     final futures = event.servers.map((server) async {
       final result = await _pingService.pingServer(server.apiUrl);
-      Logger.info('Ping result for server ${server.id}: ${result.mbps} Mbps, ${result.latency}ms');
+      if(Constants.networkLogger) {
+        Logger.info('Ping ${server.location}: ${result.mbps} Mbps, ${result.latency}ms');
+      }
       return MapEntry(server.id, PingResult(
         serverId: server.id,
         mbps: result.mbps,
@@ -151,11 +154,6 @@ class ServerListBloc extends Bloc<ServerListEvent, ServerListState> {
       selectedServer: currentState.selectedServer,
       pingResults: newPingResults,
     );
-
-    // Log the new state
-    Logger.info('Emitting new state with ${newPingResults.length} ping results');
-    
-    // Emit the new state
     emit(newState);
   }
 

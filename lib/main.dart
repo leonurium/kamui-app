@@ -10,7 +10,6 @@ import 'package:kamui_app/core/services/analytics_service.dart';
 import 'injection.dart' as di;
 import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/onboarding_screen.dart';
-import 'core/utils/logger.dart';
 
 void main() async {
   try {
@@ -26,7 +25,6 @@ void main() async {
       deviceType: 'android', // You might want to detect this dynamically
     );
     
-    Logger.info('Main: Initializing app with VpnBloc: ${di.sl<VpnBloc>()}');
     runApp(const App());
   } catch (e, stackTrace) {
     // Log the crash
@@ -48,7 +46,6 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get a single instance of VpnBloc
     final vpnBloc = di.sl<VpnBloc>();
-    Logger.info('Main: Using VpnBloc instance: $vpnBloc');
 
     return MaterialApp(
       title: 'Gama VPN',
@@ -62,7 +59,6 @@ class App extends StatelessWidget {
           BlocProvider(
             create: (context) {
               final bloc = di.sl<SplashBloc>();
-              Logger.info('Main: Created SplashBloc: $bloc');
               return bloc;
             },
           ),
