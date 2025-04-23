@@ -30,7 +30,7 @@ class _AdsOverlayState extends State<AdsOverlay> {
 
   Future<void> _loadRandomAd() async {
     final prefs = await SharedPreferences.getInstance();
-    final adsJson = prefs.getString('ads');
+    final adsJson = prefs.getString('ads_interstitial');
     if (adsJson != null) {
       final List<dynamic> adsList = jsonDecode(adsJson);
       final ads = adsList.map((json) => Ad.fromJson(json)).toList();

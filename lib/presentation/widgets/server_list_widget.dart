@@ -5,7 +5,7 @@ class ServerItemWidget extends StatelessWidget {
   final bool isFaded;
   final String label;
   final IconData icon;
-  final String flagAsset;
+  final String flagURL;
   final PingResult? pingResult;
   final VoidCallback onTap;
 
@@ -14,7 +14,7 @@ class ServerItemWidget extends StatelessWidget {
     required this.isFaded,
     required this.label,
     required this.icon,
-    required this.flagAsset,
+    required this.flagURL,
     this.pingResult,
     required this.onTap,
   }) : super(key: key);
@@ -40,7 +40,17 @@ class ServerItemWidget extends StatelessWidget {
                     CircleAvatar(
                       radius: 15,
                       backgroundColor: Colors.white,
-                      backgroundImage: ExactAssetImage(flagAsset),
+                      child: ClipOval(
+                        child: Image.network(
+                          flagURL,
+                          width: 30,
+                          height: 30,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(Icons.flag, size: 20, color: Colors.grey);
+                          },
+                        ),
+                      ),
                     ),
                     SizedBox(width: 15),
                     Column(

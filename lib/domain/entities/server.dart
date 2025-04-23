@@ -6,6 +6,10 @@ class Server {
   final bool isLocked;
   final bool isPremium;
   final String location;
+  final String flagURL;
+  final String name;
+  final String countryCode;
+
 
   Server({
     required this.id,
@@ -15,7 +19,9 @@ class Server {
     required this.isLocked,
     required this.isPremium,
     required this.location,
-
+    required this.flagURL,
+    required this.name,
+    required this.countryCode,
   });
 
   factory Server.fromJson(Map<String, dynamic> json) {
@@ -27,6 +33,9 @@ class Server {
       isLocked: json['is_locked'] ?? false,
       isPremium: json['is_premium'] ?? false,
       location: json['location'] ?? '',
+      flagURL: json['flag_url'] ?? '',
+      name: json['name'] ?? '',
+      countryCode: json['country_code'] ?? '',
     );
   }
 
@@ -39,6 +48,9 @@ class Server {
       'is_locked': isLocked,
       'is_premium': isPremium,
       'location': location,
+      'flag_url': flagURL,
+      'name': name,
+      'country_code': countryCode,
     };
   }
 }

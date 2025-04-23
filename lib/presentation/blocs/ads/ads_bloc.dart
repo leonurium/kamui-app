@@ -1,5 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'package:kamui_app/domain/entities/ad.dart';
 
 // Events
 abstract class AdsEvent extends Equatable {
@@ -45,18 +48,26 @@ class AdsError extends AdsState {
 
 // BLoC
 class AdsBloc extends Bloc<AdsEvent, AdsState> {
-  final List<String> _adUrls = [
-    'https://www.lipsum.com/images/banners/black_468x60.gif',
-    'https://www.lipsum.com/images/banners/white_468x60.gif',
-    'https://www.lipsum.com/images/banners/grey_468x60.gif',
-  ];
-
   AdsBloc() : super(AdsInitial()) {
-    on<LoadAdsEvent>((event, emit) {
+    on<LoadAdsEvent>((event, emit) async {
       try {
-        final randomIndex = DateTime.now().millisecondsSinceEpoch % _adUrls.length;
-        final randomAdUrl = _adUrls[randomIndex];
-        emit(AdsLoaded(currentAdUrl: randomAdUrl));
+        final prefs = await SharedPreferences.getInstance();
+        final adsJson = prefs.getString('ads_banner');
+        
+        if (adsJson != null) {
+          final List<dynamic> adsList = jsonDecode(adsJson);
+          if (adsList.isNotEmpty) {
+            final ads = adsList.map((ad) => Ad.fromJson(ad)).toList();
+            // Get a random ad from the list
+            final randomIndex = DateTime.now().millisecondsSinceEpoch % ads.length;
+            final randomAd = ads[randomIndex];
+            emit(AdsLoaded(currentAdUrl: randomAd.mediaUrl));
+          } else {
+            emit(AdsError('No banner ads available'));
+          }
+        } else {
+          emit(AdsError('No banner ads data found'));
+        }
       } catch (e) {
         emit(AdsError('Failed to load ads: $e'));
       }

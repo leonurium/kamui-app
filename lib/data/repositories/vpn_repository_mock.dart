@@ -19,6 +19,9 @@ class VpnRepositoryMock implements VpnRepository {
         location: 'New York',
         isLocked: false,
         isPremium: false,
+        flagURL: 'https://flagcdn.com/w40/us.png',
+        name: 'United States',
+        countryCode: 'US',
       ),
       Server(
         id: 2,
@@ -28,6 +31,9 @@ class VpnRepositoryMock implements VpnRepository {
         location: 'London',
         isLocked: false,
         isPremium: true,
+        flagURL: 'https://flagcdn.com/w40/gb.png',
+        name: 'United Kingdom',
+        countryCode: 'GB',
       ),
       Server(
         id: 3,
@@ -37,6 +43,9 @@ class VpnRepositoryMock implements VpnRepository {
         location: 'Tokyo',
         isLocked: false,
         isPremium: true,
+        flagURL: 'https://flagcdn.com/w40/jp.png',
+        name: 'Japan',
+        countryCode: 'JP',
       ),
       Server(
         id: 4,
@@ -46,6 +55,9 @@ class VpnRepositoryMock implements VpnRepository {
         location: 'Singapore',
         isLocked: false,
         isPremium: false,
+        flagURL: 'https://flagcdn.com/w40/sg.png',
+        name: 'Singapore',
+        countryCode: 'SG',
       ),
     ];
   }

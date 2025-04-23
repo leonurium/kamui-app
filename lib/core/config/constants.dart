@@ -10,4 +10,5 @@ class Constants {
   static bool get networkLogger => dotenv.env['NETWORK_LOGGER'] == 'true';
   static bool get isUseMockData => dotenv.env['USE_MOCK_DATA'] == 'true';
   static bool get forceBlockAds => dotenv.env['FORCE_BLOCK_ADS'] == 'true';
+  static const String vpnProviderBundleId = 'com.gamavpn.app';
 }

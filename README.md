@@ -62,14 +62,13 @@ lib/
 │── theme.dart             # Global themes
 
 
-- add field for flag country image
 - apakah timer waktu di hilangkan di halaman home page?
 - privacy policy
 - support page
 - marketing page
 - user agreement
-
-- after limit time, showing ads
+- after limit time 30 minutes, showing ads
+- payment
 
   # build-ios:
   #   needs: validate-version

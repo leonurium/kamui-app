@@ -89,7 +89,7 @@ class ServerListPage extends StatelessWidget {
                             isFaded: true,
                             label: server.location,
                             icon: Icons.lock,
-                            flagAsset: _getFlagAsset(server.country),
+                            flagURL: server.flagURL,
                             pingResult: pingResult,
                             onTap: () {
                               context.read<ServerListBloc>().add(SelectServerEvent(server));
@@ -134,8 +134,16 @@ class ServerListPage extends StatelessWidget {
                                         CircleAvatar(
                                           radius: 15,
                                           backgroundColor: Colors.white,
-                                          backgroundImage: ExactAssetImage(
-                                            _getFlagAsset(server.country),
+                                          child: ClipOval(
+                                            child: Image.network(
+                                              server.flagURL,
+                                              width: 30,
+                                              height: 30,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Icon(Icons.flag, size: 20, color: Colors.grey);
+                                              },
+                                            ),
                                           ),
                                         ),
                                         SizedBox(width: 15),
@@ -188,17 +196,5 @@ class ServerListPage extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _getFlagAsset(String country) {
-    // Map country names to flag assets
-    final flagAssets = {
-      'England': 'assets/england.png',
-      'United States': 'assets/usa.jpg',
-      'Canada': 'assets/canada.png',
-      'France': 'assets/france.png',
-      'Ghana': 'assets/ghana.png',
-    };
-    return flagAssets[country] ?? 'assets/ghana.png'; // Default to Ghana flag if not found
   }
 }

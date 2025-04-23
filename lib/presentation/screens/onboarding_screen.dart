@@ -4,8 +4,7 @@ import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/presentation/blocs/onboarding/onboarding_bloc.dart';
 import 'package:kamui_app/presentation/screens/home_page.dart';
 import 'package:kamui_app/injection.dart' as di;
-import 'package:wireguard_flutter/wireguard_flutter.dart';
-import 'package:wireguard_flutter/wireguard_flutter_platform_interface.dart';
+import 'package:kamui_app/core/services/wireguard_service.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
 import 'package:kamui_app/core/utils/doodle_ipsum_utils.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -20,9 +19,10 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  final WireGuardFlutterInterface _wireguard = WireGuardFlutter.instance;
+  final WireGuardService _wireguardService = di.sl<WireGuardService>();
   bool _hasAcceptedPrivacyPolicy = false;
   bool _hasGrantedVpnPermission = false;
+  bool _isInitializing = false;
 
   final List<OnboardingPage> _pages = [
     OnboardingPage(
@@ -78,24 +78,46 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _requestVpnPermission() async {
+    if (_isInitializing) return;
+
+    setState(() {
+      _isInitializing = true;
+    });
+
     try {
-      await _wireguard.initialize(interfaceName: "wg0");
+      final hasPermission = await _wireguardService.checkVpnPermission();
       
       setState(() {
-        _hasGrantedVpnPermission = true;
+        _hasGrantedVpnPermission = hasPermission;
+        _isInitializing = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Permission has been granted. click grant permission again to continue'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      if (hasPermission) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('VPN permission has been granted. Click continue to proceed.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('VPN permission is required. Please make sure you have granted VPN permissions in your device settings.'),
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: _requestVpnPermission,
+            ),
+          ),
+        );
+      }
     } catch (e) {
-      Logger.error(e.toString());
+      Logger.error('Error requesting VPN permission: $e');
+      setState(() {
+        _isInitializing = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('VPN permission is required. Please make sure you have granted VPN permissions in your device settings.'),
+          content: Text('Failed to request VPN permission. Please try again.'),
           action: SnackBarAction(
             label: 'Retry',
             onPressed: _requestVpnPermission,
@@ -107,21 +129,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _onNextPressed() {
     if (_currentPage < _pages.length - 1) {
-      if (_currentPage == 2) {
-        if (_hasGrantedVpnPermission) {
-          _pageController.nextPage(
-            duration: Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
+      if (_currentPage == 1) {
+        if (!_hasAcceptedPrivacyPolicy) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('You must accept the privacy policy to continue.'),
+              duration: Duration(seconds: 2),
+            ),
           );
-        } else {
-          _requestVpnPermission();
+          return;
         }
-      } else {
-        _pageController.nextPage(
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+      } else if (_currentPage == 2) {
+        if (!_hasGrantedVpnPermission) {
+          _requestVpnPermission();
+          return;
+        }
       }
+      
+      _pageController.nextPage(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     } else {
       // Save onboarding completed state
       context.read<OnboardingBloc>().add(CompleteOnboarding());
@@ -162,14 +190,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (_hasAcceptedPrivacyPolicy) {
-                      _onNextPressed();
-                    } else {
-                      setState(() {
-                        _hasAcceptedPrivacyPolicy = true;
-                      });
-                      _onNextPressed();
-                    }
+                    setState(() {
+                      _hasAcceptedPrivacyPolicy = true;
+                    });
+                    _onNextPressed();
                   },
                   child: Text('Accept'),
                 ),
@@ -189,7 +213,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: ElevatedButton(
-        onPressed: _onNextPressed,
+        onPressed: _isInitializing ? null : _onNextPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: Color.fromARGB(255, 26, 48, 85),
           minimumSize: Size(double.infinity, 50),
@@ -197,18 +221,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             borderRadius: BorderRadius.circular(25),
           ),
         ),
-        child: Text(
-          _currentPage == _pages.length - 1 
-              ? 'Start' 
-              : _currentPage == 2 
-                  ? 'Grant Permission' 
-                  : 'Next',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        child: _isInitializing
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                _currentPage == _pages.length - 1 
+                    ? 'Start' 
+                    : _currentPage == 2 
+                        ? 'Grant Permission' 
+                        : 'Next',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
       ),
     );
   }

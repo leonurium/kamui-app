@@ -50,12 +50,26 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
       // Get and save ads
       final ads = await getAdsUseCase.execute();
       if (ads.isNotEmpty) {
-        await prefs.setString('ads', jsonEncode(
-          ads.map((ad) => ad.toJson()).toList()
-        ));
+        // Separate ads by media type
+        final interstitialAds = ads.where((ad) => ad.mediaType == 'video' || ad.mediaType == 'image').toList();
+        final bannerAds = ads.where((ad) => ad.mediaType == 'banner').toList();
+
+        // Save interstitial ads
+        if (interstitialAds.isNotEmpty) {
+          await prefs.setString('ads_interstitial', jsonEncode(
+            interstitialAds.map((ad) => ad.toJson()).toList()
+          ));
+        }
+
+        // Save banner ads
+        if (bannerAds.isNotEmpty) {
+          await prefs.setString('ads_banner', jsonEncode(
+            bannerAds.map((ad) => ad.toJson()).toList()
+          ));
+        }
       } else if (Constants.isUseMockData) {
         // Add mockup ads if no ads from server
-        final mockupAds = [
+        final mockupInterstitialAds = [
           {
             'id': 1,
             'title': 'Premium VPN Features',
@@ -75,7 +89,21 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
             'is_auto_clicked': false,
           }
         ];
-        await prefs.setString('ads', jsonEncode(mockupAds));
+
+        final mockupBannerAds = [
+          {
+            'id': 3,
+            'title': 'Special Offer',
+            'media_type': 'banner',
+            'media_url': 'https://www.lipsum.com/images/banners/grey_468x60.gif',
+            'click_url': 'https://example.com/offer',
+            'countdown': 0,
+            'is_auto_clicked': false,
+          }
+        ];
+
+        await prefs.setString('ads_interstitial', jsonEncode(mockupInterstitialAds));
+        await prefs.setString('ads_banner', jsonEncode(mockupBannerAds));
       }
 
       emit(SplashLoaded());

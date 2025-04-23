@@ -107,8 +107,8 @@ class _HomePageState extends State<HomePage> {
       _serverListBloc.add(server_list.LoadServersEvent());
     });
     
-    // Show ads on first launch only if forceBlockAds is false
-    if (_isFirstLaunch && !Constants.forceBlockAds) {
+    // Show ads on first launch only if forceBlockAds is false and user is not premium
+    if (_isFirstLaunch && !Constants.forceBlockAds && !_isPremium) {
       setState(() {
         _showingAds = true;
       });
@@ -174,10 +174,10 @@ class _HomePageState extends State<HomePage> {
     
     setState(() {
       _isConnecting = true;  // Set connecting state before showing ads
-      if (!Constants.forceBlockAds) {
+      if (!Constants.forceBlockAds && !_isPremium) {
         _showingAds = true;
       } else {
-        // If ads are blocked, trigger VPN connection directly
+        // If ads are blocked or user is premium, trigger VPN connection directly
         _onAdsClosed(); // This will handle the VPN connection
       }
     });
@@ -195,10 +195,10 @@ class _HomePageState extends State<HomePage> {
     
     setState(() {
       _isConnecting = false;
-      if (!Constants.forceBlockAds) {
+      if (!Constants.forceBlockAds && !_isPremium) {
         _showingAds = true;
       } else {
-        // If ads are blocked, trigger VPN disconnection directly
+        // If ads are blocked or user is premium, trigger VPN disconnection directly
         _onAdsClosed(); // This will handle the VPN disconnection
       }
     });
@@ -392,7 +392,7 @@ class _HomePageState extends State<HomePage> {
                           SizedBox(height: 25),
                           ServerItemWidget(
                             isFaded: false,
-                            flagAsset: 'assets/logo.png',
+                            flagURL: server?.flagURL ?? '',
                             label: server?.location ?? 'No sever selected',
                             icon: Icons.arrow_forward_ios,
                             onTap: () async {
@@ -409,8 +409,13 @@ class _HomePageState extends State<HomePage> {
                             },
                           ),
                           const SizedBox(height: 16),
-                          const BannerAdWidget(),
-                          Spacer(),
+                          if (!_isPremium && !Constants.forceBlockAds)
+                            Expanded(
+                              child: Center(
+                                child: const BannerAdWidget(),
+                              ),
+                            ),
+                          const SizedBox(height: 16),
                           TextButton.icon(
                             style: TextButton.styleFrom(
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -423,7 +428,7 @@ class _HomePageState extends State<HomePage> {
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) => const SubscriptionPage(),
+                                  builder: (context) => const PremiumPage(),
                                 ),
                               );
                             },
@@ -448,7 +453,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          if (_showingAds)
+          if (_showingAds && !_isPremium && !Constants.forceBlockAds)
             AdsOverlay(
               onClose: _onAdsClosed,
             ),
