@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
-import 'package:flutter/services.dart';  // Add this import for PlatformException
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -14,7 +13,6 @@ import 'package:kamui_app/domain/entities/connection_data.dart';
 import 'package:kamui_app/domain/entities/device.dart';
 import 'package:kamui_app/domain/usecases/get_servers_usecase.dart';
 import 'package:kamui_app/presentation/screens/server_list_page.dart';
-import 'package:kamui_app/presentation/screens/premium_page.dart';
 import 'package:kamui_app/presentation/screens/subscription_page.dart';
 import 'package:flutter/material.dart';
 import 'package:wireguard_flutter/wireguard_flutter.dart';
@@ -22,7 +20,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart' as vpn;
 import 'package:kamui_app/domain/entities/server.dart';
 import 'package:kamui_app/presentation/widgets/ads_overlay_widget.dart';
-import 'package:wireguard_flutter/wireguard_flutter_platform_interface.dart';
 import 'package:kamui_app/presentation/widgets/connection_button_widget.dart';
 import 'package:kamui_app/presentation/widgets/banner_ad_widget.dart';
 import 'package:kamui_app/presentation/blocs/ads/ads_bloc.dart';
@@ -34,7 +31,7 @@ import '../widgets/server_list_widget.dart';
 class HomePage extends StatefulWidget {
   final vpn.VpnBloc vpnBloc;
   
-  const HomePage({Key? key, required this.vpnBloc}) : super(key: key);
+  const HomePage({super.key, required this.vpnBloc});
   
   @override
   _HomePageState createState() => _HomePageState();

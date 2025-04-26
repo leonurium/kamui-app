@@ -4,7 +4,6 @@ import 'package:kamui_app/core/config/constants.dart';
 import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
 import 'package:kamui_app/presentation/blocs/splash/splash_bloc.dart';
-import 'package:kamui_app/presentation/blocs/premium/premium_bloc.dart';
 import 'package:kamui_app/presentation/blocs/onboarding/onboarding_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -83,11 +82,6 @@ Future<void> init() async {
       sl<SharedPreferences>(),
       sl<GetServersUseCase>(),
       sl<PingService>(),
-    ));
-
-    sl.registerFactory<PremiumBloc>(() => PremiumBloc(
-      getPackagesUseCase: sl<GetPackagesUseCase>(),
-      purchasePackageUseCase: sl<PurchasePackageUseCase>(),
     ));
 
     // Onboarding bloc

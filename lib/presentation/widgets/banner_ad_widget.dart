@@ -4,7 +4,7 @@ import 'package:kamui_app/presentation/blocs/ads/ads_bloc.dart';
 import 'package:kamui_app/core/config/constants.dart';
 
 class BannerAdWidget extends StatelessWidget {
-  const BannerAdWidget({Key? key}) : super(key: key);
+  const BannerAdWidget({super.key});
 
   @override
   Widget build(BuildContext context) {

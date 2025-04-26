@@ -6,7 +6,7 @@ import 'package:kamui_app/presentation/blocs/subscription/subscription_state.dar
 import 'package:package_info_plus/package_info_plus.dart';
 
 class SubscriptionPage extends StatelessWidget {
-  const SubscriptionPage({Key? key}) : super(key: key);
+  const SubscriptionPage({super.key});
 
   @override
   Widget build(BuildContext context) {

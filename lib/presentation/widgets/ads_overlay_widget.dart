@@ -10,7 +10,7 @@ import '../../domain/entities/ad.dart';
 class AdsOverlay extends StatefulWidget {
   final VoidCallback onClose;
 
-  const AdsOverlay({Key? key, required this.onClose}) : super(key: key);
+  const AdsOverlay({super.key, required this.onClose});
 
   @override
   State<AdsOverlay> createState() => _AdsOverlayState();

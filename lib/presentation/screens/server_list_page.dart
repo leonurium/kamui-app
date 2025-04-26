@@ -6,6 +6,8 @@ import '../widgets/server_list_widget.dart';
 import 'package:kamui_app/injection.dart' as di;
 
 class ServerListPage extends StatelessWidget {
+  const ServerListPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(

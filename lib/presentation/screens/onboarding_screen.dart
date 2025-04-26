@@ -10,7 +10,7 @@ import 'package:kamui_app/core/utils/doodle_ipsum_utils.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({Key? key}) : super(key: key);
+  const OnboardingScreen({super.key});
 
   @override
   _OnboardingScreenState createState() => _OnboardingScreenState();
@@ -170,35 +170,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
           SizedBox(height: 20),
-          Container(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _hasAcceptedPrivacyPolicy = false;
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('You must accept the privacy policy to continue.'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  child: Text('Decline'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _hasAcceptedPrivacyPolicy = true;
-                    });
-                    _onNextPressed();
-                  },
-                  child: Text('Accept'),
-                ),
-              ],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _hasAcceptedPrivacyPolicy = false;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('You must accept the privacy policy to continue.'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+                child: Text('Decline'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _hasAcceptedPrivacyPolicy = true;
+                  });
+                  _onNextPressed();
+                },
+                child: Text('Accept'),
+              ),
+            ],
           ),
         ],
       ),
@@ -327,7 +325,7 @@ class OnboardingPage {
 class OnboardingPageView extends StatelessWidget {
   final OnboardingPage page;
 
-  const OnboardingPageView({Key? key, required this.page}) : super(key: key);
+  const OnboardingPageView({super.key, required this.page});
 
   @override
   Widget build(BuildContext context) {
