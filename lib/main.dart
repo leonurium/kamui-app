@@ -7,28 +7,43 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:kamui_app/core/services/analytics_service.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
 import 'injection.dart' as di;
 import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/onboarding_screen.dart';
 
+String _getDeviceType() {
+  if (kIsWeb) return 'web';
+  if (Platform.isAndroid) return 'android';
+  if (Platform.isIOS) return 'ios';
+  if (Platform.isMacOS) return 'macos';
+  if (Platform.isWindows) return 'windows';
+  if (Platform.isLinux) return 'linux';
+  return 'unknown';
+}
+
+Future<void> _initializeApp() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load();
+  await Firebase.initializeApp();
+  await di.init();
+  
+  // Set initial user properties with dynamic device type
+  await AnalyticsService.setUserProperties(
+    subscriptionStatus: 'free',
+    connectionType: 'mobile',
+    deviceType: _getDeviceType(),
+  );
+}
+
 void main() async {
   try {
-    WidgetsFlutterBinding.ensureInitialized();
-    await dotenv.load();
-    await Firebase.initializeApp();
-    await di.init();
-    
-    // Set initial user properties
-    await AnalyticsService.setUserProperties(
-      subscriptionStatus: 'free',
-      connectionType: 'mobile',
-      deviceType: 'android', // You might want to detect this dynamically
-    );
-    
+    await _initializeApp();
     runApp(const App());
   } catch (e, stackTrace) {
-    // Log the crash
-    AnalyticsService.logAppCrash(
+    // Log the crash with more context
+    await AnalyticsService.logAppCrash(
       error: e.toString(),
       stackTrace: stackTrace.toString(),
       screenName: 'main',

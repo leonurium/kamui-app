@@ -3,6 +3,9 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter/material.dart';
+import 'package:wireguard_flutter/wireguard_flutter.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:kamui_app/core/config/constants.dart';
 import 'package:kamui_app/core/services/wireguard_service.dart';
@@ -14,9 +17,6 @@ import 'package:kamui_app/domain/entities/device.dart';
 import 'package:kamui_app/domain/usecases/get_servers_usecase.dart';
 import 'package:kamui_app/presentation/screens/server_list_page.dart';
 import 'package:kamui_app/presentation/screens/subscription_page.dart';
-import 'package:flutter/material.dart';
-import 'package:wireguard_flutter/wireguard_flutter.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart' as vpn;
 import 'package:kamui_app/domain/entities/server.dart';
 import 'package:kamui_app/presentation/widgets/ads_overlay_widget.dart';
@@ -37,14 +37,13 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _showingAds = false;
   bool _isFirstLaunch = true;
   ConnectionData? currentConnectionData;
   Server? server;
   String connectionTime = '00.00.00';
   late String signature;
-  bool _isConnecting = false;
   final WireGuardService _wireguardService = WireGuardService();
   StreamSubscription? _vpnStateSubscription;
   VpnStage _currentStage = VpnStage.disconnected;
@@ -95,6 +94,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _adsBloc = AdsBloc();
     _adsBloc.add(LoadAdsEvent());
     _serverListBloc = server_list.ServerListBloc(
@@ -109,17 +109,19 @@ class _HomePageState extends State<HomePage> {
     
     _initWireguard();
     _loadDeviceData().then((_) {
-      // Load servers and select default based on premium status
       _serverListBloc.add(server_list.LoadServersEvent());
     });
     _getVersion();
     
-    // Show ads on first launch only if forceBlockAds is false and user is not premium
     if (_isFirstLaunch && !Constants.forceBlockAds && !_isPremium) {
       setState(() {
         _showingAds = true;
       });
     }
+
+    Future.delayed(Duration(milliseconds: 500), () {
+      _checkWireguardStatus();
+    });
   }
 
   Future<void> _initWireguard() async {
@@ -161,12 +163,74 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _vpnStateSubscription?.cancel();
     _adsBloc.close();
     if (_currentStage == VpnStage.connected) {
       _wireguardService.disconnect();
     }
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Add a small delay to ensure the app is fully resumed
+      Future.delayed(Duration(milliseconds: 500), () {
+        _checkWireguardStatus();
+      });
+    }
+  }
+
+  Future<void> _checkWireguardStatus() async {
+    try {
+      final isConnected = await WireGuardFlutter.instance.isConnected();
+      if (mounted) {
+        setState(() {
+          _currentStage = isConnected ? VpnStage.connected : VpnStage.disconnected;
+          if (isConnected) {
+            // If connected, ensure we have the connection data
+            if (currentConnectionData == null) {
+              // Try to get the current connection data from the bloc state
+              final currentState = widget.vpnBloc.state;
+              if (currentState is vpn.VpnConnected) {
+                currentConnectionData = currentState.connectionData;
+              }
+            }
+          } else {
+            // If disconnected, clear connection data
+            currentConnectionData = null;
+          }
+        });
+        
+        // Show status update to user
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isConnected ? 'VPN is connected' : 'VPN is disconnected',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: isConnected ? Colors.green : Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      Logger.error('Failed to check WireGuard status: $e');
+      if (mounted) {
+        setState(() {
+          _currentStage = VpnStage.disconnected;
+          currentConnectionData = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to check VPN status: $e'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   void _handleVpnConnection() {
@@ -180,7 +244,6 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
     
     setState(() {
-      _isConnecting = true;  // Set connecting state before showing ads
       if (!Constants.forceBlockAds && !_isPremium) {
         _showingAds = true;
       } else {
@@ -191,17 +254,16 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _handleVpnDisconnection() {
-    if (currentConnectionData == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No active connection to disconnect')),
-      );
-      return;
-    }
+    // if (currentConnectionData == null) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(content: Text('No active connection to disconnect')),
+    //   );
+    //   return;
+    // }
     
     if (!mounted) return;
     
     setState(() {
-      _isConnecting = false;
       if (!Constants.forceBlockAds && !_isPremium) {
         _showingAds = true;
       } else {
@@ -211,7 +273,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _onAdsClosed() {
+  Future<void> _onAdsClosed() async {
     setState(() {
       _showingAds = false;
       _isFirstLaunch = false;
@@ -224,7 +286,9 @@ class _HomePageState extends State<HomePage> {
       return;
     }
     
-    if (_isConnecting) {
+    final isConnected = await _wireguardService.isConnected();
+    
+    if (!isConnected) {
       if (server != null) {
         _showLoadingSnackBar('Connecting to VPN...');
         widget.vpnBloc.add(vpn.ConnectVpnEvent(server!.id));
