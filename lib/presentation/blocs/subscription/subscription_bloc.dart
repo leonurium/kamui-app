@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:kamui_app/core/utils/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'subscription_event.dart';
 import 'subscription_state.dart';
 
@@ -59,20 +60,16 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       }
 
       Logger.info('SubscriptionBloc: Found ${response.productDetails.length} products');
-      response.productDetails.forEach((product) {
-        Logger.info('''
-          Product Details:
-          ID: ${product.id}
-          Title: ${product.title}
-          Description: ${product.description}
-          Raw Price: ${product.rawPrice}
-          Currency: ${product.currencyCode}
-          Currency Symbol: ${product.currencySymbol}
-          Price: ${product.price}
-        ''');
-      });
-
-      emit(SubscriptionLoaded(response.productDetails));
+      // Get app name for cleaning
+      final packageInfo = await PackageInfo.fromPlatform();
+      final appName = packageInfo.appName;
+      final cleanedTitles = response.productDetails.map((product) {
+        return product.title
+            .replaceAll(RegExp(r'\s*\(.*\)'), '')
+            .replaceAll('Gama VPN', appName)
+            .trim();
+      }).toList();
+      emit(SubscriptionLoaded(response.productDetails, cleanedTitles));
     } catch (e) {
       Logger.error('SubscriptionBloc: Failed to load products: $e');
       emit(SubscriptionError('Failed to load products: $e'));

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/services.dart';  // Add this import for PlatformException
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:kamui_app/core/config/constants.dart';
 import 'package:kamui_app/core/services/wireguard_service.dart';
@@ -54,6 +55,7 @@ class _HomePageState extends State<HomePage> {
   late server_list.ServerListBloc _serverListBloc;
   late SharedPreferences _prefs;
   bool _isPremium = false;
+  String? _version;
 
   Future<void> _loadDeviceData() async {
     try {
@@ -68,6 +70,13 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       Logger.error('Failed to load device data: $e');
     }
+  }
+
+  Future<void> _getVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _version = 'v${packageInfo.version}';
+    });
   }
 
   void _selectDefaultServer(List<Server> servers) {
@@ -106,6 +115,7 @@ class _HomePageState extends State<HomePage> {
       // Load servers and select default based on premium status
       _serverListBloc.add(server_list.LoadServersEvent());
     });
+    _getVersion();
     
     // Show ads on first launch only if forceBlockAds is false and user is not premium
     if (_isFirstLaunch && !Constants.forceBlockAds && !_isPremium) {
@@ -444,6 +454,14 @@ class _HomePageState extends State<HomePage> {
                                   .copyWith(color: Colors.white),
                             ),
                           ),
+                          SizedBox(height: 8),
+                          if (_version != null)
+                            Text(
+                              _version!,
+                              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                                color: Colors.grey[600],
+                              ),
+                            ),
                           SizedBox(height: 35),
                         ],
                       ),

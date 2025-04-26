@@ -8,8 +8,9 @@ class SubscriptionLoading extends SubscriptionState {}
 
 class SubscriptionLoaded extends SubscriptionState {
   final List<ProductDetails> products;
+  final List<String> cleanedTitles;
   
-  SubscriptionLoaded(this.products);
+  SubscriptionLoaded(this.products, this.cleanedTitles);
 }
 
 class SubscriptionError extends SubscriptionState {

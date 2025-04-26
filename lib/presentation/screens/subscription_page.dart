@@ -3,79 +3,187 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kamui_app/presentation/blocs/subscription/subscription_bloc.dart';
 import 'package:kamui_app/presentation/blocs/subscription/subscription_event.dart';
 import 'package:kamui_app/presentation/blocs/subscription/subscription_state.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class SubscriptionPage extends StatelessWidget {
   const SubscriptionPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => SubscriptionBloc()..add(LoadProductsEvent()),
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          centerTitle: true,
-          title: Text(
-            'Premium Subscription',
-            style: Theme.of(context).textTheme.titleLarge!.copyWith(
-              fontWeight: FontWeight.w600,
+    final Color primaryColor = const Color(0xFF1A3055);
+    final Color accentColor = const Color(0xFF7C4DFF);
+    return FutureBuilder<PackageInfo>(
+      future: PackageInfo.fromPlatform(),
+      builder: (context, snapshot) {
+        final appName = snapshot.data?.appName ?? '';
+        return BlocProvider(
+          create: (context) => SubscriptionBloc()..add(LoadProductsEvent()),
+          child: Scaffold(
+            backgroundColor: primaryColor,
+            appBar: AppBar(
+              centerTitle: true,
+              backgroundColor: primaryColor,
+              elevation: 0,
+              title: Text(
+                'Premium',
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+              actions: [
+                TextButton.icon(
+                  onPressed: () {
+                    context.read<SubscriptionBloc>().add(RestorePurchasesEvent());
+                  },
+                  icon: Icon(Icons.restore, color: Colors.white),
+                  label: Text('Restore', style: TextStyle(color: Colors.white)),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            body: BlocBuilder<SubscriptionBloc, SubscriptionState>(
+              builder: (context, state) {
+                if (state is SubscriptionLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state is SubscriptionError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        SizedBox(height: 16),
+                        Text(
+                          state.message,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => context.read<SubscriptionBloc>().add(LoadProductsEvent()),
+                          child: Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                } else if (state is SubscriptionLoaded) {
+                  return SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Header Section
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.verified_user, color: accentColor, size: 28),
+                                  SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      'Unlock True Privacy',
+                                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                      softWrap: true,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Enjoy secure, private, and unrestricted internet access.',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Colors.white70,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Subscription Cards
+                        _buildSubscriptionList(context, state, accentColor, appName),
+                        // Feature Comparison
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          child: _FeatureComparison(),
+                        ),
+                        // Trust Badges
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.verified, color: accentColor),
+                              SizedBox(width: 8),
+                              Text('30-day money-back guarantee',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
+                        // Payment Methods
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.credit_card, color: Colors.white70),
+                            SizedBox(width: 8),
+                            Icon(Icons.account_balance_wallet, color: Colors.white70),
+                          ],
+                        ),
+                        // FAQ Link
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          child: Center(
+                            child: TextButton(
+                              onPressed: () {},
+                              child: Text('FAQ', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return const Center(child: Text('No subscription plans available', style: TextStyle(color: Colors.white)));
+              },
             ),
           ),
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        body: BlocBuilder<SubscriptionBloc, SubscriptionState>(
-          builder: (context, state) {
-            if (state is SubscriptionLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is SubscriptionError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: Colors.red),
-                    SizedBox(height: 16),
-                    Text(
-                      state.message,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => context.read<SubscriptionBloc>().add(LoadProductsEvent()),
-                      child: Text('Retry'),
-                    ),
-                  ],
-                ),
-              );
-            } else if (state is SubscriptionLoaded) {
-              return _buildSubscriptionList(context, state);
-            }
-            return const Center(child: Text('No subscription plans available'));
-          },
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildSubscriptionList(BuildContext context, SubscriptionLoaded state) {
+  Widget _buildSubscriptionList(BuildContext context, SubscriptionLoaded state, Color accentColor, String appName) {
     return Column(
       children: [
         SizedBox(height: 16),
         SizedBox(
-          height: 500,
+          height: 260,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: 16),
             itemCount: state.products.length,
             itemBuilder: (context, index) {
               final product = state.products[index];
+              final cleanedTitle = state.cleanedTitles[index];
               return Container(
                 width: 300,
                 margin: EdgeInsets.only(right: 16),
-                child: _SubscriptionCard(product: product),
+                child: _SubscriptionCard(
+                  product: product,
+                  accentColor: accentColor,
+                  isBestValue: index == state.products.length - 1, // Emphasize last (yearly) plan
+                  cleanedTitle: cleanedTitle,
+                ),
               );
             },
           ),
@@ -87,67 +195,124 @@ class SubscriptionPage extends StatelessWidget {
 
 class _SubscriptionCard extends StatelessWidget {
   final dynamic product; // Replace with your actual product type
+  final Color accentColor;
+  final bool isBestValue;
+  final String cleanedTitle;
 
-  const _SubscriptionCard({Key? key, required this.product}) : super(key: key);
+  const _SubscriptionCard({Key? key, required this.product, required this.accentColor, this.isBestValue = false, required this.cleanedTitle}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: EdgeInsets.only(bottom: 16),
-      elevation: 4,
+      elevation: isBestValue ? 8 : 4,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
+        side: isBestValue ? BorderSide(color: accentColor, width: 2) : BorderSide.none,
       ),
-      child: Container(
-        padding: EdgeInsets.all(16),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              product.title,
-              style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                fontWeight: FontWeight.bold,
+            if (isBestValue)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Best Value',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
               ),
+            SizedBox(height: 8),
+            Text(
+              cleanedTitle,
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: 8),
             Text(
               product.description,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
-            SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  product.price,
-                  style: Theme.of(context).textTheme.titleLarge!.copyWith(
+            SizedBox(height: 12),
+            Text(
+              product.price,
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
                     color: Theme.of(context).textTheme.titleLarge!.color,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<SubscriptionBloc>().add(
-                      PurchaseProductEvent(product.id),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color.fromARGB(255, 26, 48, 85),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  ),
-                  child: Text(
-                    'Subscribe',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
             ),
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  context.read<SubscriptionBloc>().add(
+                    PurchaseProductEvent(product.id),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: Text(
+                  'Subscribe',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeatureComparison extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final features = [
+      {'icon': Icons.block, 'text': 'No Ads'},
+      {'icon': Icons.public, 'text': 'Global high-speed servers'},
+      {'icon': Icons.lock_outline, 'text': 'No logs & full privacy'},
+      {'icon': Icons.speed, 'text': 'Unlimited bandwidth'},
+      {'icon': Icons.support_agent, 'text': '24/7 customer support'},
+    ];
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 3,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('All plans include:',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            ...features.map((f) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
+                    children: [
+                      Icon(f['icon'] as IconData, color: Colors.green, size: 20),
+                      const SizedBox(width: 8),
+                      Text(f['text'] as String, style: const TextStyle(fontSize: 15)),
+                    ],
+                  ),
+                )),
           ],
         ),
       ),
