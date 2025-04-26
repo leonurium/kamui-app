@@ -119,7 +119,7 @@ class _SubscriptionCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  product.rawPrice.toString(),
+                  product.price,
                   style: Theme.of(context).textTheme.titleLarge!.copyWith(
                     color: Theme.of(context).textTheme.titleLarge!.color,
                     fontWeight: FontWeight.bold,

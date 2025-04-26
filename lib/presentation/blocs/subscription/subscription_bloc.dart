@@ -9,7 +9,7 @@ import 'subscription_state.dart';
 class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _subscription;
-  final List<String> _productIds = ['subscription_type_1', 'subscription_type_2', 'subscription_type_3', 'subscriptions_product_id'];
+  final List<String> _productIds = ['subscription_type_1', 'subscription_type_2', 'subscription_type_3'];
   
   SubscriptionBloc() : super(SubscriptionInitial()) {
     on<LoadProductsEvent>(_onLoadProducts);
@@ -65,8 +65,10 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           ID: ${product.id}
           Title: ${product.title}
           Description: ${product.description}
-          Price: ${product.rawPrice}
+          Raw Price: ${product.rawPrice}
           Currency: ${product.currencyCode}
+          Currency Symbol: ${product.currencySymbol}
+          Price: ${product.price}
         ''');
       });
 
