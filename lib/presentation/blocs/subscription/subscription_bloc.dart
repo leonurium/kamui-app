@@ -9,8 +9,7 @@ import 'subscription_state.dart';
 class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _subscription;
-  final List<String> _productIds = ['subscription_type_1', 'subscription_type_2', 'subscription_type_3'];
-  final Set<String> _productIdSets = {'subscription_type_1', 'subscription_type_2', 'subscription_type_3'};
+  final List<String> _productIds = ['subscription_type_1', 'subscription_type_2', 'subscription_type_3', 'subscriptions_product_id'];
   
   SubscriptionBloc() : super(SubscriptionInitial()) {
     on<LoadProductsEvent>(_onLoadProducts);
@@ -43,8 +42,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         return;
       }
 
-      Logger.info('SubscriptionBloc: Loading products with IDs: $_productIdSets');
-      final ProductDetailsResponse response = await _inAppPurchase.queryProductDetails(_productIdSets);
+      Logger.info('SubscriptionBloc: Loading products with IDs: $_productIds');
+      final ProductDetailsResponse response = await _inAppPurchase.queryProductDetails(_productIds.toSet());
       Logger.info('SubscriptionBloc: Response: $response');
       
       if (response.notFoundIDs.isNotEmpty) {
