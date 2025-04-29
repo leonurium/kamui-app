@@ -68,7 +68,7 @@ lib/
 - 30-day money-back guarantee di hapus. [Done]
 - click contiue di onboarding di hilangkan atau di ganti. [Done]
 - di bawah description di tambah info untuk restore package. [Done]
-- auto connect di awal feature nya di hilangkan.
+- auto connect di awal feature nya di hilangkan. [Done]
 - countdown belum jalan. [Done]
 - Ijo untuk connected, untuk disconnected merah, untuk proses connecting dan disconnecting warna nya abu-abu. [Done]
 - selected server di list server checklist nya hilang
