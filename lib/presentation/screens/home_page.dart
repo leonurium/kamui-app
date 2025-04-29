@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -299,6 +298,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       }
     } else {
       if (currentConnectionData != null) {
+        _currentStage = VpnStage.disconnecting;
         _showLoadingSnackBar('Disconnecting from VPN...');
         widget.vpnBloc.add(vpn.DisconnectVpnEvent(
           sessionId: currentConnectionData!.session.sessionId,
@@ -397,23 +397,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       child: Column(
                         children: [
                           SizedBox(height: 25),
-                          FutureBuilder<List<NetworkInterface>>(
-                            future: NetworkInterface.list(),
-                            builder: (context, snapshot) {
-                              final data = snapshot.data ?? [];
-                              final ip = data.isEmpty ? '0.0.0.0' : data.first.addresses.first.address;
-                              return Center(
-                                child: Text(
-                                  ip,
-                                  style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                                    color: Theme.of(context).textTheme.bodyLarge!.color,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          SizedBox(height: 15),
                           Center(
                             child: ConnectionButtonWidget(
                               currentStage: _currentStage,
@@ -486,7 +469,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 child: const BannerAdWidget(),
                               ),
                             ),
-                            const SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           if (!_isPremium && !Constants.forceBlockAds)
                             TextButton.icon(
                               style: TextButton.styleFrom(
@@ -517,15 +500,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                               ),
                             ),
                           SizedBox(height: 8),
-                          if (_version != null)
-                            if (_isPremium)
-                              Spacer(),
+                          if (_version != null) ...[
+                            if (_isPremium) const Spacer(),
                             Text(
                               _version!,
                               style: Theme.of(context).textTheme.bodySmall!.copyWith(
                                 color: Colors.grey[600],
                               ),
                             ),
+                          ],
                           SizedBox(height: 35),
                         ],
                       ),

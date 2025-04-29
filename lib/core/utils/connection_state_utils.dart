@@ -45,7 +45,18 @@ class ConnectionStateUtils {
   static Color getConnectionColor(VpnStage? state) {
     switch (state) {
       case VpnStage.connected:
-        return Color.fromARGB(255, 26, 48, 85);
+        return Colors.green;
+      case VpnStage.disconnected:
+        return Colors.red;
+      case VpnStage.connecting:
+      case VpnStage.disconnecting:
+      case VpnStage.denied:
+      case VpnStage.authenticating:
+      case VpnStage.exiting:
+      case VpnStage.noConnection:
+      case VpnStage.preparing:
+      case VpnStage.reconnect:
+      case VpnStage.waitingConnection:
       default:
         return Colors.grey;
     }

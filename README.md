@@ -70,7 +70,7 @@ lib/
 - di bawah description di tambah info untuk restore package. [Done]
 - auto connect di awal feature nya di hilangkan.
 - countdown belum jalan.
-- Ijo untuk connected, untuk disconnected merah, untuk proses connecting dan disconnecting warna nya abu-abu.
+- Ijo untuk connected, untuk disconnected merah, untuk proses connecting dan disconnecting warna nya abu-abu. [Done]
 - selected server di list server checklist nya hilang
 - if premium user not get ads and button get premium being gone. [Done]
 - premium user totally ads, tidak muncul [Done]
