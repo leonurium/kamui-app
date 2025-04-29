@@ -95,7 +95,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       if (hasPermission) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('VPN permission has been granted. Click continue to proceed.'),
+            content: Text('VPN permission has been granted. Click Grant Permission again to continue.'),
             duration: Duration(seconds: 2),
           ),
         );

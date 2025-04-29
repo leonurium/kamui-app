@@ -143,7 +143,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
   Future<void> _handleSuccessfulPurchase(PurchaseDetails purchaseDetails) async {
     try {
-      Logger.info('SubscriptionBloc: Handling successful purchase: ${purchaseDetails.productID}');
+      Logger.info('''
+        Purchase Details:
+        Source: ${purchaseDetails.verificationData.source}
+        Product ID: ${purchaseDetails.productID}
+        Purchase token: ${purchaseDetails.verificationData.localVerificationData}
+        Receipt: ${purchaseDetails.verificationData.serverVerificationData}
+      ''');
       
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_premium', true);

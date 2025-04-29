@@ -486,37 +486,40 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 child: const BannerAdWidget(),
                               ),
                             ),
-                          const SizedBox(height: 16),
-                          TextButton.icon(
-                            style: TextButton.styleFrom(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              padding: EdgeInsets.symmetric(
-                                vertical: 15,
-                                horizontal: MediaQuery.of(context).size.width / 4.5,
-                              ),
-                              backgroundColor: Color.fromARGB(255, 26, 48, 85),
-                            ),
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const SubscriptionPage(),
+                            const SizedBox(height: 16),
+                          if (!_isPremium && !Constants.forceBlockAds)
+                            TextButton.icon(
+                              style: TextButton.styleFrom(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 15,
+                                  horizontal: MediaQuery.of(context).size.width / 4.5,
                                 ),
-                              );
-                            },
-                            icon: Icon(
-                              Icons.star,
-                              color: Colors.white,
+                                backgroundColor: Color.fromARGB(255, 26, 48, 85),
+                              ),
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const SubscriptionPage(),
+                                  ),
+                                );
+                              },
+                              icon: Icon(
+                                Icons.star,
+                                color: Colors.white,
+                              ),
+                              label: Text(
+                                'Get Premium',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelLarge!
+                                    .copyWith(color: Colors.white),
+                              ),
                             ),
-                            label: Text(
-                              'Get Premium',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelLarge!
-                                  .copyWith(color: Colors.white),
-                            ),
-                          ),
                           SizedBox(height: 8),
                           if (_version != null)
+                            if (_isPremium)
+                              Spacer(),
                             Text(
                               _version!,
                               style: Theme.of(context).textTheme.bodySmall!.copyWith(

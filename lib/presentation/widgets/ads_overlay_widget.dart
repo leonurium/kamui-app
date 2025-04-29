@@ -132,11 +132,25 @@ class _AdsOverlayState extends State<AdsOverlay> {
     if (url != null) {
       try {
         final uri = Uri.parse(url);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        } else {
-          Logger.error("Could not launch $url");
+        if (!uri.isAbsolute) {
+          Logger.error("Invalid URL format: $url");
+          return;
         }
+
+        final canLaunch = await canLaunchUrl(uri);
+        if (!canLaunch) {
+          Logger.error("Could not launch URL: $url");
+          return;
+        }
+
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+          webViewConfiguration: const WebViewConfiguration(
+            enableJavaScript: true,
+            enableDomStorage: true,
+          ),
+        );
       } catch (e) {
         Logger.error("Error launching URL: $e");
       }

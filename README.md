@@ -62,13 +62,19 @@ lib/
 │── theme.dart             # Global themes
 
 
-- apakah timer waktu di hilangkan di halaman home page?
 - privacy policy
-- support page
-- marketing page
-- user agreement
 - after limit time 30 minutes, showing ads
-- payment
+- iklan belum bisa di klik. [Done]
+- 30-day money-back guarantee di hapus. [Done]
+- click contiue di onboarding di hilangkan atau di ganti. [Done]
+- di bawah description di tambah info untuk restore package. [Done]
+- auto connect di awal feature nya di hilangkan.
+- countdown belum jalan.
+- Ijo untuk connected, untuk disconnected merah, untuk proses connecting dan disconnecting warna nya abu-abu.
+- selected server di list server checklist nya hilang
+- if premium user not get ads and button get premium being gone. [Done]
+- premium user totally ads, tidak muncul [Done]
+
 
   # build-ios:
   #   needs: validate-version

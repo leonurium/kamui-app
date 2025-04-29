@@ -102,7 +102,7 @@ class SubscriptionPage extends StatelessWidget {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                'Enjoy secure, private, and unrestricted internet access.',
+                                "Enjoy secure, private, and unrestricted internet access. If you've previously purchased a premium package, you can restore your latest purchase by tapping the 'Restore' button in the top right corner.",
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                       color: Colors.white70,
                                     ),
@@ -116,19 +116,6 @@ class SubscriptionPage extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                           child: _FeatureComparison(),
-                        ),
-                        // Trust Badges
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.verified, color: accentColor),
-                              SizedBox(width: 8),
-                              Text('30-day money-back guarantee',
-                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                            ],
-                          ),
                         ),
                         // Payment Methods
                         Row(

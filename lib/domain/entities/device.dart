@@ -17,21 +17,21 @@ class Device {
 
   factory Device.fromJson(Map<String, dynamic> json) {
     return Device(
-      id: json['ID'] ?? 0,
-      deviceId: json['DeviceID'] ?? '',
-      isPremium: json['IsPremium'] ?? false,
-      expiresAt: json['ExpiresAt'],
-      createdAt: json['CreatedAt'] ?? '',
-      updatedAt: json['UpdatedAt'] ?? '',
+      id: json['id'] ?? 0,
+      deviceId: json['device_id'] ?? '',
+      isPremium: json['is_premium'] ?? false,
+      expiresAt: json['expires_at'],
+      createdAt: json['created_at'] ?? '',
+      updatedAt: json['updated_at'] ?? '',
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'ID': id,
-    'DeviceID': deviceId,
-    'IsPremium': isPremium,
-    'ExpiresAt': expiresAt,
-    'CreatedAt': createdAt,
-    'UpdatedAt': updatedAt,
+    'id': id,
+    'device_id': deviceId,
+    'is_premium': isPremium,
+    'expires_at': expiresAt,
+    'created_at': createdAt,
+    'updated_at': updatedAt,
   };
 }
