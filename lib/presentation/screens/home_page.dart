@@ -276,9 +276,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _onAdsClosed() async {
+    if (_isFirstLaunch) {
+      setState(() {
+        _showingAds = false;
+        _isFirstLaunch = false;
+      });
+      return;
+    }
     setState(() {
       _showingAds = false;
-      _isFirstLaunch = false;
     });
     
     if (!mounted) return;
@@ -475,6 +481,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                               flagURL: server?.flagURL ?? '',
                               label: server?.location ?? 'No sever selected',
                               icon: Icons.arrow_forward_ios,
+                              isEnabled: _currentStage != VpnStage.connected,
                               onTap: () async {
                                 final res = await Navigator.of(context)
                                     .push(MaterialPageRoute(builder: (context) {
