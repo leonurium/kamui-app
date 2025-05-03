@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:kamui_app/core/services/wireguard_service.dart';
 import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
 import 'package:kamui_app/presentation/blocs/splash/splash_bloc.dart';
@@ -26,6 +27,7 @@ Future<void> initBlocModule(GetIt sl) async {
       getServersUseCase: sl<GetServersUseCase>(),
       getAdsUseCase: sl<GetAdsUseCase>(),
       registerDeviceUseCase: sl<RegisterDeviceUseCase>(),
+      wireguardService: sl<WireGuardService>(),
     ));
 
     sl.registerFactory<ServerListBloc>(() => ServerListBloc(

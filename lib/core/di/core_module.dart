@@ -9,7 +9,7 @@ Future<void> initCoreModule(GetIt sl) async {
     // Core services
     sl.registerLazySingleton<ApiClient>(() => ApiClient());
     sl.registerLazySingleton<PingService>(() => PingService());
-    sl.registerLazySingleton<WireGuardService>(() => WireGuardService());
+    sl.registerSingleton<WireGuardService>(WireGuardService());
   } catch (e) {
     Logger.error('Error in core module initialization: $e');
     rethrow;

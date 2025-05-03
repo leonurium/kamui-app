@@ -9,17 +9,26 @@ import 'package:wireguard_flutter/wireguard_flutter_platform_interface.dart';
 import 'package:kamui_app/core/config/constants.dart';
 
 class WireGuardService {
+  static final WireGuardService _instance = WireGuardService._internal();
+  factory WireGuardService() => _instance;
+  
   final WireGuardFlutterInterface _wireguard = WireGuardFlutter.instance;
   late SharedPreferences _prefs;
   static const int _maxRetries = 3;
   static const Duration _retryDelay = Duration(seconds: 2);
   bool _isInitialized = false;
 
-  WireGuardService() {
+  WireGuardService._internal() {
+    Logger.info('WireGuardService singleton instance created with hash: ${hashCode}');
     _prefs = di.sl<SharedPreferences>();
   }
 
   Future<bool> initialize() async {
+    if (_isInitialized) {
+      Logger.info('WireGuardService already initialized');
+      return true;
+    }
+
     int retryCount = 0;
     while (retryCount < _maxRetries) {
       try {
@@ -121,6 +130,23 @@ class WireGuardService {
     }
   }
 
+  Future<bool> isConnected() async {
+    try {
+      if (!_isInitialized) {
+        Logger.info('WireGuard not initialized, returning false for isConnected');
+        return false;
+      }
+      final isConnected = await _wireguard.isConnected();
+      Logger.info('WireGuard connection status: $isConnected');
+      return isConnected;
+    } catch (e) {
+      Logger.error('Error checking WireGuard connection status: $e');
+      Logger.error('Error type: ${e.runtimeType}');
+      Logger.error('Error stack trace: ${StackTrace.current}');
+      return false;
+    }
+  }
+
   String _buildWireGuardConfig(ConnectionData connectionData) {
     String config = '[Interface]';
     config += '\nPrivateKey = ${connectionData.session.privateKey}';
@@ -138,20 +164,5 @@ class WireGuardService {
     }
 
     return config;
-  }
-
-  Future<bool> isConnected() async {
-    try {
-      if (!_isInitialized) {
-        return false;
-      }
-      final isConnected = await _wireguard.isConnected();
-      return isConnected;
-    } catch (e) {
-      Logger.error('Error checking WireGuard connection status: $e');
-      Logger.error('Error type: ${e.runtimeType}');
-      Logger.error('Error stack trace: ${StackTrace.current}');
-      return false;
-    }
   }
 } 

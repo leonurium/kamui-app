@@ -9,6 +9,8 @@ import 'core/di/core_module.dart';
 import 'core/di/repository_module.dart';
 import 'core/di/usecase_module.dart';
 import 'core/di/bloc_module.dart';
+import 'package:kamui_app/core/services/network_reachability_service.dart';
+import 'package:kamui_app/presentation/blocs/network/network_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -26,6 +28,20 @@ Future<void> init() async {
     await initRepositoryModule(sl);
     await initUseCaseModule(sl);
     await initBlocModule(sl);
+    
+    // Network Reachability
+    sl.registerLazySingleton(() {
+      return NetworkReachabilityService();
+    });
+    
+    sl.registerLazySingleton(() {
+      final bloc = NetworkBloc(
+        reachabilityService: sl(),
+        wireguardService: sl(),
+      );
+      return bloc;
+    });
+    
   } catch (e) {
     Logger.error('Error in dependency injection: $e');
     rethrow;

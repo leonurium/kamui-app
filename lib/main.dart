@@ -12,6 +12,7 @@ import 'dart:io' show Platform;
 import 'injection.dart' as di;
 import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/onboarding_screen.dart';
+import 'package:kamui_app/presentation/blocs/network/network_bloc.dart';
 
 String _getDeviceType() {
   if (kIsWeb) return 'web';
@@ -61,34 +62,39 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get a single instance of VpnBloc
     final vpnBloc = di.sl<VpnBloc>();
+    final networkBloc = di.sl<NetworkBloc>();
+    networkBloc.add(StartNetworkMonitoring());
 
-    return MaterialApp(
-      title: 'Gama VPN',
-      debugShowCheckedModeBanner: false,
-      theme: customLightTheme(context),
-      darkTheme: customDarkTheme(context),
-      themeMode: ThemeMode.system,
-      navigatorObservers: [AnalyticsService.observer],
-      home: MultiBlocProvider(
-        providers: [
-          BlocProvider(
-            create: (context) {
-              final bloc = di.sl<SplashBloc>();
-              return bloc;
-            },
-          ),
-          BlocProvider.value(
-            value: vpnBloc,
-          ),
-          BlocProvider(
-            create: (context) {
-              final bloc = di.sl<OnboardingBloc>();
-              bloc.add(CheckOnboardingStatus());
-              return bloc;
-            },
-          ),
-        ],
-        child: BlocBuilder<OnboardingBloc, OnboardingState>(
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(
+          value: networkBloc,
+        ),
+        BlocProvider.value(
+          value: vpnBloc,
+        ),
+        BlocProvider(
+          create: (context) {
+            final bloc = di.sl<SplashBloc>();
+            return bloc;
+          },
+        ),
+        BlocProvider(
+          create: (context) {
+            final bloc = di.sl<OnboardingBloc>();
+            bloc.add(CheckOnboardingStatus());
+            return bloc;
+          },
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Gama VPN',
+        debugShowCheckedModeBanner: false,
+        theme: customLightTheme(context),
+        darkTheme: customDarkTheme(context),
+        themeMode: ThemeMode.system,
+        navigatorObservers: [AnalyticsService.observer],
+        home: BlocBuilder<OnboardingBloc, OnboardingState>(
           builder: (context, state) {
             if (state is OnboardingNotCompleted) {
               AnalyticsService.setCurrentScreen('OnboardingScreen');

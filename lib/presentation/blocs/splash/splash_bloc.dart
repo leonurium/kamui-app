@@ -7,6 +7,7 @@ import 'package:kamui_app/domain/usecases/get_servers_usecase.dart';
 import 'package:kamui_app/domain/usecases/get_ads_usecase.dart';
 import 'package:kamui_app/domain/usecases/register_device_usecase.dart';
 import 'package:kamui_app/core/utils/signature.dart';
+import 'package:kamui_app/core/services/wireguard_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,12 +18,17 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
   final GetServersUseCase getServersUseCase;
   final GetAdsUseCase getAdsUseCase;
   final RegisterDeviceUseCase registerDeviceUseCase;
+  final WireGuardService _wireguardService;
+  int _retryCount = 0;
+  static const int _maxRetries = 3;
 
   SplashBloc({
     required this.getServersUseCase,
     required this.getAdsUseCase,
     required this.registerDeviceUseCase,
-  }) : super(SplashInitial()) {
+    required WireGuardService wireguardService,
+  })  : _wireguardService = wireguardService,
+        super(SplashInitial()) {
     on<InitializeApp>(_onInitializeApp);
   }
 
@@ -41,9 +47,12 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
       
       final deviceData = registerResponse.data;
       if (deviceData == null) {
-        emit(SplashError('Failed to register device'));
+        await _handleRegistrationFailure(emit);
         return;
       }
+
+      // Reset retry count on successful registration
+      _retryCount = 0;
 
       // Save device data safely
       await prefs.setString('device_data', jsonEncode(deviceData.toJson()));
@@ -109,10 +118,41 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
 
       emit(SplashLoaded());
     } catch (e) {
-      // force timeout error
-      Logger.error(e.toString());
+      Logger.error('Error during initialization: $e');
+      await _handleRegistrationFailure(emit);
+    }
+  }
+
+  Future<void> _handleRegistrationFailure(Emitter<SplashState> emit) async {
+    _retryCount++;
+    
+    if (_retryCount >= _maxRetries) {
+      Logger.error('Max retries reached for device registration');
+      emit(SplashError('Failed to register device after ${_maxRetries} attempts'));
+      return;
+    }
+
+    try {
+      // Check if VPN is connected
+      await _wireguardService.initialize();
+      final isConnected = await _wireguardService.isConnected();
+      if (isConnected) {
+        Logger.info('VPN is connected, attempting to disconnect before retry');
+        await _wireguardService.disconnect();
+        Logger.info('VPN disconnected successfully, retrying registration');
+      } else {
+        emit(SplashTimeoutError('Connection timeout. Please check your internet connection and try again.'));
+        Logger.info('VPN is not connected, proceeding with retry');
+      }
+
+      // Add a small delay before retrying
+      await Future.delayed(const Duration(seconds: 10));
+      
+      // Retry the initialization
+      add(InitializeApp());
+    } catch (e) {
+      Logger.error('Error during retry attempt: $e');
       emit(SplashTimeoutError('Connection timeout. Please check your internet connection and try again.'));
-      // emit(SplashError(e.toString()));
     }
   }
 }
