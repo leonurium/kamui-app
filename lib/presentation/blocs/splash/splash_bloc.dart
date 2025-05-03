@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:kamui_app/core/config/constants.dart';
 import 'package:kamui_app/core/utils/device_info.dart';
+import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/domain/usecases/get_servers_usecase.dart';
 import 'package:kamui_app/domain/usecases/get_ads_usecase.dart';
 import 'package:kamui_app/domain/usecases/register_device_usecase.dart';
@@ -108,11 +109,10 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
 
       emit(SplashLoaded());
     } catch (e) {
-      if (e.toString().contains('took longer than') || e.toString().contains('timeout')) {
-        emit(SplashTimeoutError('Connection timeout. Please check your internet connection and try again.'));
-      } else {
-        emit(SplashError(e.toString()));
-      }
+      // force timeout error
+      Logger.error(e.toString());
+      emit(SplashTimeoutError('Connection timeout. Please check your internet connection and try again.'));
+      // emit(SplashError(e.toString()));
     }
   }
 }
