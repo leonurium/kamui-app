@@ -20,3 +20,4 @@ samples, guidance on mobile development, and a full API reference.
 
 - privacy policy
 - selected server di list server checklist nya hilang
+- payment

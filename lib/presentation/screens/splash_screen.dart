@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kamui_app/presentation/blocs/vpn/vpn_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'dart:io';
 import '../blocs/splash/splash_bloc.dart';
 import 'home_page.dart';
 
@@ -29,6 +30,27 @@ class _SplashScreenState extends State<SplashScreen> {
     });
   }
 
+  void _showTimeoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Connection Error'),
+          content: const Text('Unable to connect to the server. This might be due to VPN blocking internet access. Please close the app and try again.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close App'),
+              onPressed: () {
+                exit(0);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<SplashBloc, SplashState>(
@@ -48,6 +70,8 @@ class _SplashScreenState extends State<SplashScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
           );
+        } else if (state is SplashTimeoutError) {
+          _showTimeoutDialog(context);
         }
       },
       child: Scaffold(

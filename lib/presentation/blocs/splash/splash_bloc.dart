@@ -108,7 +108,11 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
 
       emit(SplashLoaded());
     } catch (e) {
-      emit(SplashError(e.toString()));
+      if (e.toString().contains('took longer than') || e.toString().contains('timeout')) {
+        emit(SplashTimeoutError('Connection timeout. Please check your internet connection and try again.'));
+      } else {
+        emit(SplashError(e.toString()));
+      }
     }
   }
 }

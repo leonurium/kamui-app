@@ -165,6 +165,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Expanded(
             child: WebViewWidget(
             controller: WebViewController()
+            // terms-of-service?webview_app=1
               ..loadRequest(Uri.parse('https://getlorem.com/privacy-policy'))
               ..setJavaScriptMode(JavaScriptMode.unrestricted),
             ),

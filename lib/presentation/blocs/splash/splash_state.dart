@@ -21,3 +21,12 @@ class SplashError extends SplashState {
   @override
   List<Object> get props => [message];
 }
+
+class SplashTimeoutError extends SplashState {
+  final String message;
+
+  const SplashTimeoutError(this.message);
+
+  @override
+  List<Object> get props => [message];
+}
