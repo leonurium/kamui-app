@@ -12,7 +12,7 @@ class AuthRepositoryMock implements AuthRepository {
     final device = Device(
       id: 1,
       deviceId: deviceId,
-      isPremium: false,
+      isPremium: true,
       expiresAt: null,
       createdAt: now.toIso8601String(),
       updatedAt: now.toIso8601String(),

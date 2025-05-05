@@ -276,7 +276,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _onAdsClosed() async {
-    if (_isFirstLaunch) {
+    if (_isFirstLaunch && !_isPremium) {
       setState(() {
         _showingAds = false;
         _isFirstLaunch = false;
@@ -399,6 +399,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 listener: (context, state) {
                   if (state is server_list.ServerListLoaded) {
                     _selectDefaultServer([...state.premiumServers, ...state.freeServers]);
+                    // Update local state if bloc has a selected server
+                    if (state.selectedServer != null && server?.id != state.selectedServer?.id) {
+                      setState(() {
+                        server = state.selectedServer;
+                      });
+                    }
                   }
                 },
                 child: Scaffold(
@@ -485,13 +491,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                               onTap: () async {
                                 final res = await Navigator.of(context)
                                     .push(MaterialPageRoute(builder: (context) {
-                                  return ServerListPage();
+                                  return ServerListPage(
+                                    selectedServer: server,
+                                    bloc: _serverListBloc,
+                                  );
                                 }));
 
                                 if (res != null) {
+                                  // Update both the local state and the bloc state
                                   setState(() {
                                     server = res;
                                   });
+                                  _serverListBloc.add(server_list.SelectServerEvent(res));
                                 }
                               },
                             ),

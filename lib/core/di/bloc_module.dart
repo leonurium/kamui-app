@@ -30,7 +30,7 @@ Future<void> initBlocModule(GetIt sl) async {
       wireguardService: sl<WireGuardService>(),
     ));
 
-    sl.registerFactory<ServerListBloc>(() => ServerListBloc(
+    sl.registerLazySingleton<ServerListBloc>(() => ServerListBloc(
       sl<SharedPreferences>(),
       sl<GetServersUseCase>(),
       sl<PingService>(),

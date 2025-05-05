@@ -32,7 +32,7 @@ class ServerListBloc extends Bloc<ServerListEvent, ServerListState> {
   void _startPingTimer() {
     _pingTimer?.cancel();
     _pingTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (_currentServers.isNotEmpty) {
+      if (_currentServers.isNotEmpty && state is ServerListLoaded) {
         add(PingServersEvent(_currentServers));
       }
     });
@@ -81,10 +81,25 @@ class ServerListBloc extends Bloc<ServerListEvent, ServerListState> {
       final premiumServers = servers.where((server) => server.isPremium).toList();
       final freeServers = servers.where((server) => !server.isPremium).toList();
 
+      // Try to load previously selected server
+      Server? selectedServer;
+      final selectedServerJson = _prefs.getString('selected_server');
+      if (selectedServerJson != null) {
+        try {
+          selectedServer = Server.fromJson(jsonDecode(selectedServerJson));
+          // Verify the server still exists in the current list
+          if (!servers.any((s) => s.id == selectedServer!.id)) {
+            selectedServer = null;
+          }
+        } catch (e) {
+          Logger.error('Failed to load selected server: $e');
+        }
+      }
+
       emit(ServerListLoaded(
         premiumServers: premiumServers,
         freeServers: freeServers,
-        selectedServer: null,
+        selectedServer: selectedServer,
         pingResults: _pingResults,
       ));
 
@@ -107,10 +122,25 @@ class ServerListBloc extends Bloc<ServerListEvent, ServerListState> {
         final premiumServers = servers.where((server) => server.isPremium).toList();
         final freeServers = servers.where((server) => !server.isPremium).toList();
 
+        // Try to load previously selected server
+        Server? selectedServer;
+        final selectedServerJson = _prefs.getString('selected_server');
+        if (selectedServerJson != null) {
+          try {
+            selectedServer = Server.fromJson(jsonDecode(selectedServerJson));
+            // Verify the server still exists in the current list
+            if (!servers.any((s) => s.id == selectedServer!.id)) {
+              selectedServer = null;
+            }
+          } catch (e) {
+            Logger.error('Failed to load selected server: $e');
+          }
+        }
+
         emit(ServerListLoaded(
           premiumServers: premiumServers,
           freeServers: freeServers,
-          selectedServer: null,
+          selectedServer: selectedServer,
           pingResults: _pingResults,
         ));
 
@@ -127,34 +157,50 @@ class ServerListBloc extends Bloc<ServerListEvent, ServerListState> {
     Emitter<ServerListState> emit,
   ) async {
     if (state is! ServerListLoaded) return;
-
-    final currentState = state as ServerListLoaded;
     
     // Ping all servers in parallel
     final futures = event.servers.map((server) async {
-      final result = await _pingService.pingServer(server.apiUrl);
-      if(Constants.networkLogger) {
-        Logger.info('Ping ${server.location}: ${result.mbps} Mbps, ${result.latency}ms');
+      try {
+        final result = await _pingService.pingServer(server.apiUrl);
+        if(Constants.networkLogger) {
+          Logger.info('Ping ${server.location}: ${result.mbps} Mbps, ${result.latency}ms');
+        }
+        return MapEntry(server.id, PingResult(
+          serverId: server.id,
+          mbps: result.mbps,
+          latency: result.latency,
+          isOnline: result.isOnline,
+        ));
+      } catch (e) {
+        Logger.error('Failed to ping server ${server.location}: $e');
+        return MapEntry(server.id, PingResult(
+          serverId: server.id,
+          mbps: 0,
+          latency: 0,
+          isOnline: false,
+        ));
       }
-      return MapEntry(server.id, PingResult(
-        serverId: server.id,
-        mbps: result.mbps,
-        latency: result.latency,
-        isOnline: result.isOnline,
-      ));
     });
 
-    final results = await Future.wait(futures);
-    final newPingResults = Map<int, PingResult>.fromEntries(results);
-    
-    // Create a new state with updated ping results
-    final newState = ServerListLoaded(
-      premiumServers: currentState.premiumServers,
-      freeServers: currentState.freeServers,
-      selectedServer: currentState.selectedServer,
-      pingResults: newPingResults,
-    );
-    emit(newState);
+    try {
+      final results = await Future.wait(futures);
+      final newPingResults = Map<int, PingResult>.fromEntries(results);
+      
+      // Only emit new state if we're still in ServerListLoaded state
+      if (state is ServerListLoaded) {
+        final currentState = state as ServerListLoaded;
+        // Create a new state with updated ping results
+        final newState = ServerListLoaded(
+          premiumServers: currentState.premiumServers,
+          freeServers: currentState.freeServers,
+          selectedServer: currentState.selectedServer,
+          pingResults: newPingResults,
+        );
+        emit(newState);
+      }
+    } catch (e) {
+      Logger.error('Failed to process ping results: $e');
+    }
   }
 
   void _onSelectServer(
@@ -163,6 +209,10 @@ class ServerListBloc extends Bloc<ServerListEvent, ServerListState> {
   ) {
     if (state is ServerListLoaded) {
       final currentState = state as ServerListLoaded;
+      
+      // Save selected server to preferences
+      _prefs.setString('selected_server', jsonEncode(event.server.toJson()));
+      
       emit(ServerListLoaded(
         premiumServers: currentState.premiumServers,
         freeServers: currentState.freeServers,
