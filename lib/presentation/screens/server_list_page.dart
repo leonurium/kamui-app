@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:roundcheckbox/roundcheckbox.dart';
 import '../blocs/server_list/server_list_bloc.dart';
-import '../widgets/server_list_widget.dart';
 import 'package:kamui_app/domain/entities/server.dart';
 
 class ServerListPage extends StatefulWidget {
   final Server? selectedServer;
   final ServerListBloc bloc;
+  final bool isPremium;
   
   const ServerListPage({
     super.key, 
     this.selectedServer,
     required this.bloc,
+    required this.isPremium,
   });
 
   @override
@@ -101,16 +102,77 @@ class _ServerListPageState extends State<ServerListPage> {
                       itemBuilder: (_, index) {
                         final server = state.premiumServers[index];
                         final pingResult = state.pingResults[server.id];
-                        return ServerItemWidget(
-                          isFaded: true,
-                          label: server.location,
-                          icon: Icons.lock,
-                          flagURL: server.flagURL,
-                          pingResult: pingResult,
-                          onTap: () {
-                            widget.bloc.add(SelectServerEvent(server));
-                            Navigator.of(context).pop(server);
-                          },
+                        return Material(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Theme.of(context).cardColor,
+                          child: Padding(
+                            padding: const EdgeInsets.all(7.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Wrap(
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 15,
+                                        backgroundColor: Colors.white,
+                                        child: ClipOval(
+                                          child: Image.network(
+                                            server.flagURL,
+                                            width: 30,
+                                            height: 30,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return Icon(Icons.flag, size: 20, color: Colors.grey);
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 15),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            server.location,
+                                            style: Theme.of(context).textTheme.bodyLarge,
+                                          ),
+                                          if (pingResult != null)
+                                            Text(
+                                              '${pingResult.mbps.toStringAsFixed(1)} Mbps • ${pingResult.latency}ms',
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                color: pingResult.isOnline ? Colors.green : Colors.red,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (widget.isPremium)
+                                  RoundCheckBox(
+                                    size: 24,
+                                    checkedWidget: const Icon(Icons.check, size: 18, color: Colors.white),
+                                    borderColor: server == state.selectedServer
+                                        ? Theme.of(context).scaffoldBackgroundColor
+                                        : Color.fromARGB(255, 26, 48, 85),
+                                    checkedColor: Color.fromARGB(255, 26, 48, 85),
+                                    isChecked: server == state.selectedServer,
+                                    onTap: (x) {
+                                      widget.bloc.add(SelectServerEvent(server));
+                                      Navigator.of(context).pop(server);
+                                    },
+                                  )
+                                else
+                                  Icon(
+                                    Icons.lock,
+                                    color: Colors.grey,
+                                    size: 24,
+                                  ),
+                              ],
+                            ),
+                          ),
                         );
                       },
                       separatorBuilder: (_, index) => SizedBox(height: 10),

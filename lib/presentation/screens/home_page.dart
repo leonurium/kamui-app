@@ -494,6 +494,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                   return ServerListPage(
                                     selectedServer: server,
                                     bloc: _serverListBloc,
+                                    isPremium: _isPremium,
                                   );
                                 }));
 
