@@ -73,7 +73,7 @@ class PremiumRepositoryMock implements PremiumRepository {
   }
 
   @override
-  Future<bool> purchasePackage(int packageId, String purchaseToken, String platform) async {
+  Future<bool> purchasePackage(String packageId, String purchaseToken, String platform) async {
     // Simulate network delay
     await Future.delayed(Duration(seconds: 1));
     return true; // Always return success in mock

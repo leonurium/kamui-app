@@ -2,23 +2,31 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:kamui_app/core/utils/logger.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kamui_app/domain/usecases/purchase_package_usecase.dart';
+import 'dart:convert';
 import 'subscription_event.dart';
 import 'subscription_state.dart';
 
 class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
+  final PurchasePackageUseCase _purchasePackageUseCase;
   StreamSubscription<List<PurchaseDetails>>? _subscription;
   final List<String> _productIds = ['subscription_type_1', 'subscription_type_2', 'subscription_type_3'];
   
-  SubscriptionBloc() : super(SubscriptionInitial()) {
+  SubscriptionBloc({
+    required PurchasePackageUseCase purchasePackageUseCase,
+  }) : _purchasePackageUseCase = purchasePackageUseCase,
+       super(SubscriptionInitial()) {
     on<LoadProductsEvent>(_onLoadProducts);
     on<PurchaseProductEvent>(_onPurchaseProduct);
     on<RestorePurchasesEvent>(_onRestorePurchases);
+    on<HandlePurchaseUpdateEvent>(_onHandlePurchaseUpdate);
+    on<HandleSuccessfulPurchaseEvent>(_onHandleSuccessfulPurchase);
     
     _subscription = _inAppPurchase.purchaseStream.listen(
-      _handlePurchaseUpdates,
+      (purchaseDetailsList) => add(HandlePurchaseUpdateEvent(purchaseDetailsList)),
       onDone: () {
         _subscription?.cancel();
       },
@@ -121,10 +129,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     }
   }
 
-  void _handlePurchaseUpdates(List<PurchaseDetails> purchaseDetailsList) {
-    Logger.info('SubscriptionBloc: Purchase updates received: ${purchaseDetailsList.length} items');
+  Future<void> _onHandlePurchaseUpdate(
+    HandlePurchaseUpdateEvent event,
+    Emitter<SubscriptionState> emit,
+  ) async {
+    Logger.info('SubscriptionBloc: Purchase updates received: ${event.purchaseDetailsList.length} items');
     
-    for (var purchaseDetails in purchaseDetailsList) {
+    for (var purchaseDetails in event.purchaseDetailsList) {
       Logger.info('''
         Purchase Details:
         ID: ${purchaseDetails.productID}
@@ -133,7 +144,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       ''');
       
       if (purchaseDetails.status == PurchaseStatus.purchased) {
-        _handleSuccessfulPurchase(purchaseDetails);
+        add(HandleSuccessfulPurchaseEvent(purchaseDetails));
       } else if (purchaseDetails.status == PurchaseStatus.error) {
         Logger.error('SubscriptionBloc: Purchase error: ${purchaseDetails.error}');
         addError(purchaseDetails.error!);
@@ -141,8 +152,12 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     }
   }
 
-  Future<void> _handleSuccessfulPurchase(PurchaseDetails purchaseDetails) async {
+  Future<void> _onHandleSuccessfulPurchase(
+    HandleSuccessfulPurchaseEvent event,
+    Emitter<SubscriptionState> emit,
+  ) async {
     try {
+      final purchaseDetails = event.purchaseDetails;
       Logger.info('''
         Purchase Details:
         Source: ${purchaseDetails.verificationData.source}
@@ -151,15 +166,39 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         Receipt: ${purchaseDetails.verificationData.serverVerificationData}
       ''');
       
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('is_premium', true);
-      
-      if (purchaseDetails.pendingCompletePurchase) {
-        Logger.info('SubscriptionBloc: Completing purchase');
-        await _inAppPurchase.completePurchase(purchaseDetails);
+      // Verify purchase with backend
+      final isVerified = await _purchasePackageUseCase.execute(
+        purchaseDetails.productID,
+        purchaseDetails.verificationData.serverVerificationData,
+        purchaseDetails.verificationData.source,
+      );
+
+      if (isVerified) {
+        // Update device data in SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        final deviceDataStr = prefs.getString('device_data');
+        if (deviceDataStr != null) {
+          final deviceData = jsonDecode(deviceDataStr);
+          deviceData['is_premium'] = true;
+          await prefs.setString('device_data', jsonEncode(deviceData));
+          Logger.info('SubscriptionBloc: Device data updated: $deviceData');
+        }
+
+        // Complete the purchase
+        if (purchaseDetails.pendingCompletePurchase) {
+          Logger.info('SubscriptionBloc: Completing purchase');
+          await _inAppPurchase.completePurchase(purchaseDetails);
+        }
+
+        // Emit success state
+        emit(PurchaseSuccess(purchaseDetails));
+      } else {
+        Logger.error('SubscriptionBloc: Purchase verification failed');
+        emit(PurchaseError('Purchase verification failed'));
       }
     } catch (e) {
       Logger.error('SubscriptionBloc: Failed to handle purchase: $e');
+      emit(PurchaseError('Failed to handle purchase: $e'));
     }
   }
 

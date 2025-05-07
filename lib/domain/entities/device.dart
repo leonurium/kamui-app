@@ -1,7 +1,7 @@
 class Device {
   final int id;
   final String deviceId;
-  final bool isPremium;
+  bool isPremium;
   final String? expiresAt;
   final String createdAt;
   final String updatedAt;

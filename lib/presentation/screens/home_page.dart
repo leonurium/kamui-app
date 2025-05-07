@@ -525,12 +525,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                   ),
                                   backgroundColor: Color.fromARGB(255, 26, 48, 85),
                                 ),
-                                onPressed: () {
-                                  Navigator.of(context).push(
+                                onPressed: () async {
+                                  final result = await Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (context) => const SubscriptionPage(),
                                     ),
                                   );
+                                  
+                                  if (result == true) {
+                                    // Reload device data to update premium status
+                                    await _loadDeviceData();
+                                    // Reload servers to show premium servers
+                                    _serverListBloc.add(server_list.LoadServersEvent());
+                                  }
                                 },
                                 icon: Icon(
                                   Icons.star,

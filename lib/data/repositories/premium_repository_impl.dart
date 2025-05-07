@@ -37,12 +37,12 @@ class PremiumRepositoryImpl implements PremiumRepository {
   }
 
   @override
-  Future<bool> purchasePackage(int packageId, String purchaseToken, String platform) async {
+  Future<bool> purchasePackage(String packageId, String purchaseToken, String platform) async {
     try {
       final response = await _apiClient.dio.post(
-        '/api/payment',
+        '/api/payment/paid',
         data: {
-          'package_id': packageId,
+          'product_id': packageId,
           'purchase_token': purchaseToken,
           'platform': platform,
         },

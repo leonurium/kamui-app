@@ -5,7 +5,7 @@ class PurchasePackageUseCase {
 
   PurchasePackageUseCase(this.repository);
 
-  Future<bool> execute(int packageId, String purchaseToken, String platform) {
+  Future<bool> execute(String packageId, String purchaseToken, String platform) {
     return repository.purchasePackage(packageId, purchaseToken, platform);
   }
 }
