@@ -25,13 +25,26 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     on<HandlePurchaseUpdateEvent>(_onHandlePurchaseUpdate);
     on<HandleSuccessfulPurchaseEvent>(_onHandleSuccessfulPurchase);
     
+    // Listen to purchase stream and handle any pending transactions
     _subscription = _inAppPurchase.purchaseStream.listen(
-      (purchaseDetailsList) => add(HandlePurchaseUpdateEvent(purchaseDetailsList)),
+      (purchaseDetailsList) {        
+        // Handle any pending transactions
+        for (var purchase in purchaseDetailsList) {
+          if (purchase.pendingCompletePurchase) {
+            _inAppPurchase.completePurchase(purchase).then((_) {
+            }).catchError((error) {
+              Logger.error('SubscriptionBloc: Error completing pending purchase: $error');
+            });
+          }
+        }
+        
+        // Process the purchase updates
+        add(HandlePurchaseUpdateEvent(purchaseDetailsList));
+      },
       onDone: () {
         _subscription?.cancel();
       },
       onError: (error) {
-        Logger.error('SubscriptionBloc: Purchase stream error: $error');
         addError(error);
       },
     );
@@ -46,28 +59,21 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     try {
       final isAvailable = await _inAppPurchase.isAvailable();
       if (!isAvailable) {
-        Logger.error('SubscriptionBloc: In-app purchases are not available');
         emit(SubscriptionError('In-app purchases are not available'));
         return;
       }
 
-      Logger.info('SubscriptionBloc: Loading products with IDs: $_productIds');
       final ProductDetailsResponse response = await _inAppPurchase.queryProductDetails(_productIds.toSet());
-      Logger.info('SubscriptionBloc: Response: $response');
-      
       if (response.notFoundIDs.isNotEmpty) {
-        Logger.info('SubscriptionBloc: _onLoadProducts: notFoundIDs: ${response.notFoundIDs}');
         emit(SubscriptionError('Some products were not found'));
         return;
       }
 
       if (response.productDetails.isEmpty) {
-        Logger.error('SubscriptionBloc: No products available');
         emit(SubscriptionError('No products available'));
         return;
       }
 
-      Logger.info('SubscriptionBloc: Found ${response.productDetails.length} products');
       // Get app name for cleaning
       final packageInfo = await PackageInfo.fromPlatform();
       final appName = packageInfo.appName;
@@ -79,7 +85,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       }).toList();
       emit(SubscriptionLoaded(response.productDetails, cleanedTitles));
     } catch (e) {
-      Logger.error('SubscriptionBloc: Failed to load products: $e');
       emit(SubscriptionError('Failed to load products: $e'));
     }
   }
@@ -88,11 +93,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     PurchaseProductEvent event,
     Emitter<SubscriptionState> emit,
   ) async {
-    try {
-      Logger.info('SubscriptionBloc: Attempting to purchase product: ${event.productId}');
-      
+    try {      
       if (state is! SubscriptionLoaded) {
-        Logger.error('SubscriptionBloc: Invalid state for purchase');
         emit(PurchaseError('Invalid state for purchase'));
         return;
       }
@@ -101,9 +103,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       final product = products.firstWhere(
         (p) => p.id == event.productId,
         orElse: () => throw Exception('Product not found'),
-      );
-
-      Logger.info('SubscriptionBloc: Found product: ${product.id}');
+      );      
+      // Emit purchase in progress state
+      emit(PurchaseInProgress());
       
       final PurchaseParam purchaseParam = PurchaseParam(
         productDetails: product,
@@ -111,7 +113,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       
       await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
     } catch (e) {
-      Logger.error('SubscriptionBloc: Purchase failed: $e');
       emit(PurchaseError('Failed to purchase: $e'));
     }
   }
@@ -121,10 +122,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     Emitter<SubscriptionState> emit,
   ) async {
     try {
-      Logger.info('SubscriptionBloc: Restoring purchases');
       await _inAppPurchase.restorePurchases();
     } catch (e) {
-      Logger.error('SubscriptionBloc: Failed to restore purchases: $e');
       emit(SubscriptionError('Failed to restore purchases: $e'));
     }
   }
@@ -132,9 +131,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   Future<void> _onHandlePurchaseUpdate(
     HandlePurchaseUpdateEvent event,
     Emitter<SubscriptionState> emit,
-  ) async {
-    Logger.info('SubscriptionBloc: Purchase updates received: ${event.purchaseDetailsList.length} items');
-    
+  ) async {    
     for (var purchaseDetails in event.purchaseDetailsList) {
       Logger.info('''
         Purchase Details:
@@ -146,7 +143,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       if (purchaseDetails.status == PurchaseStatus.purchased) {
         add(HandleSuccessfulPurchaseEvent(purchaseDetails));
       } else if (purchaseDetails.status == PurchaseStatus.error) {
-        Logger.error('SubscriptionBloc: Purchase error: ${purchaseDetails.error}');
         addError(purchaseDetails.error!);
       }
     }
@@ -181,23 +177,19 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           final deviceData = jsonDecode(deviceDataStr);
           deviceData['is_premium'] = true;
           await prefs.setString('device_data', jsonEncode(deviceData));
-          Logger.info('SubscriptionBloc: Device data updated: $deviceData');
         }
 
         // Complete the purchase
         if (purchaseDetails.pendingCompletePurchase) {
-          Logger.info('SubscriptionBloc: Completing purchase');
           await _inAppPurchase.completePurchase(purchaseDetails);
         }
 
         // Emit success state
         emit(PurchaseSuccess(purchaseDetails));
       } else {
-        Logger.error('SubscriptionBloc: Purchase verification failed');
         emit(PurchaseError('Purchase verification failed'));
       }
     } catch (e) {
-      Logger.error('SubscriptionBloc: Failed to handle purchase: $e');
       emit(PurchaseError('Failed to handle purchase: $e'));
     }
   }

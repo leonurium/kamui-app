@@ -56,6 +56,8 @@ class SubscriptionPage extends StatelessWidget {
                     backgroundColor: Colors.red,
                   ),
                 );
+                // Reload products after error
+                context.read<SubscriptionBloc>().add(LoadProductsEvent());
               }
             },
             child: Scaffold(
@@ -91,7 +93,11 @@ class SubscriptionPage extends StatelessWidget {
               body: BlocBuilder<SubscriptionBloc, SubscriptionState>(
                 builder: (context, state) {
                   if (state is SubscriptionLoading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    );
                   } else if (state is SubscriptionError) {
                     return Center(
                       child: Column(
@@ -113,74 +119,113 @@ class SubscriptionPage extends StatelessWidget {
                       ),
                     );
                   } else if (state is SubscriptionLoaded) {
-                    return SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          // Header Section
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                    return Stack(
+                      children: [
+                        SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              // Header Section
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(Icons.verified_user, color: accentColor, size: 28),
-                                    SizedBox(width: 8),
-                                    Flexible(
-                                      child: Text(
-                                        'Unlock True Privacy',
-                                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                        softWrap: true,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 2,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.verified_user, color: accentColor, size: 28),
+                                        SizedBox(width: 8),
+                                        Flexible(
+                                          child: Text(
+                                            'Unlock True Privacy',
+                                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                            softWrap: true,
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      "Enjoy secure, private, and unrestricted internet access. If you've previously purchased a premium package, you can restore your latest purchase by tapping the 'Restore' button in the top right corner.",
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                            color: Colors.white70,
+                                          ),
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: 4),
-                                Text(
-                                  "Enjoy secure, private, and unrestricted internet access. If you've previously purchased a premium package, you can restore your latest purchase by tapping the 'Restore' button in the top right corner.",
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: Colors.white70,
-                                      ),
+                              ),
+                              // Subscription Cards
+                              _buildSubscriptionList(context, state, accentColor, appName),
+                              // Feature Comparison
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                child: _FeatureComparison(),
+                              ),
+                              // Payment Methods
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.credit_card, color: Colors.white70),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.account_balance_wallet, color: Colors.white70),
+                                ],
+                              ),
+                              // FAQ Link
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                                child: Center(
+                                  child: TextButton(
+                                    onPressed: () {},
+                                    child: Text('FAQ', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
+                                  ),
                                 ),
-                              ],
-                            ),
-                          ),
-                          // Subscription Cards
-                          _buildSubscriptionList(context, state, accentColor, appName),
-                          // Feature Comparison
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                            child: _FeatureComparison(),
-                          ),
-                          // Payment Methods
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.credit_card, color: Colors.white70),
-                              SizedBox(width: 8),
-                              Icon(Icons.account_balance_wallet, color: Colors.white70),
+                              ),
                             ],
                           ),
-                          // FAQ Link
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        ),
+                        if (state is PurchaseInProgress)
+                          Container(
+                            color: Colors.black54,
                             child: Center(
-                              child: TextButton(
-                                onPressed: () {},
-                                child: Text('FAQ', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Processing purchase...',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Please wait while we process your payment',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                      ],
                     );
                   }
-                  return const Center(child: Text('No subscription plans available', style: TextStyle(color: Colors.white)));
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  );
                 },
               ),
             ),
@@ -281,26 +326,40 @@ class _SubscriptionCard extends StatelessWidget {
             const Spacer(),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  context.read<SubscriptionBloc>().add(
-                    PurchaseProductEvent(product.id),
+              child: BlocBuilder<SubscriptionBloc, SubscriptionState>(
+                builder: (context, state) {
+                  final bool isPurchasing = state is PurchaseInProgress;
+                  return ElevatedButton(
+                    onPressed: isPurchasing ? null : () {
+                      context.read<SubscriptionBloc>().add(
+                        PurchaseProductEvent(product.id),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accentColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: isPurchasing
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Text(
+                            'Subscribe',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accentColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: Text(
-                  'Subscribe',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
               ),
             ),
           ],

@@ -131,7 +131,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       await _wireguardService.initialize();
       _vpnStateSubscription = WireGuardFlutter.instance.vpnStageSnapshot.listen(
         (stage) {
-          Logger.info('VPN Stage changed to: $stage');
           if (mounted) {
             setState(() {
               _currentStage = stage;
@@ -219,7 +218,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         );
       }
     } catch (e) {
-      Logger.error('Failed to check WireGuard status: $e');
       if (mounted) {
         setState(() {
           _currentStage = VpnStage.disconnected;
@@ -295,7 +293,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
     
     final isConnected = await _wireguardService.isConnected();
-    
+
     if (!isConnected) {
       if (server != null) {
         _showLoadingSnackBar('Connecting to VPN...');

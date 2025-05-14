@@ -31,12 +31,10 @@ class NetworkBloc extends Bloc<NetworkEvent, NetworkState> {
     Emitter<NetworkState> emit,
   ) async {
     if (_isMonitoring) {
-      Logger.warning('Network monitoring already running');
       return;
     }
 
     try {
-      Logger.info('Starting network monitoring');
       _reachabilitySubscription?.cancel();
       _reachabilitySubscription = _reachabilityService.reachabilityStream.listen(
         (isReachable) => add(NetworkStatusChanged(isReachable)),
@@ -65,7 +63,6 @@ class NetworkBloc extends Bloc<NetworkEvent, NetworkState> {
     }
 
     try {
-      Logger.info('Stopping network monitoring');
       _reachabilitySubscription?.cancel();
       _reachabilityService.stopMonitoring();
       _isMonitoring = false;
@@ -79,7 +76,6 @@ class NetworkBloc extends Bloc<NetworkEvent, NetworkState> {
     NetworkStatusChanged event,
     Emitter<NetworkState> emit,
   ) async {
-    Logger.info('Network status: ${event.isReachable ? "Connected" : "Disconnected"}');
     emit(NetworkStatusUpdated(event.isReachable));
     
     if (!event.isReachable) {
@@ -91,7 +87,6 @@ class NetworkBloc extends Bloc<NetworkEvent, NetworkState> {
     try {
       final isConnected = await _wireguardService.isConnected();
       if (isConnected) {
-        Logger.warning('Network unreachable, disconnecting VPN');
         await _wireguardService.disconnect();
         emit(NetworkDisconnected());
       }
@@ -103,7 +98,6 @@ class NetworkBloc extends Bloc<NetworkEvent, NetworkState> {
 
   Future<void> _attemptForceDisconnect(Emitter<NetworkState> emit) async {
     try {
-      Logger.warning('Attempting force disconnect');
       await _wireguardService.disconnect();
       emit(NetworkDisconnected());
     } catch (e) {
@@ -113,7 +107,6 @@ class NetworkBloc extends Bloc<NetworkEvent, NetworkState> {
 
   @override
   Future<void> close() {
-    Logger.info('Closing NetworkBloc');
     _reachabilitySubscription?.cancel();
     _reachabilityService.dispose();
     _isMonitoring = false;

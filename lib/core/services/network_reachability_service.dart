@@ -15,11 +15,9 @@ class NetworkReachabilityService {
 
   void startMonitoring() {
     if (_isMonitoring) {
-      Logger.warning('Monitoring already active');
       return;
     }
 
-    Logger.info('Starting network monitoring');
     _isMonitoring = true;
     _checkReachability();
     _monitoringTimer = Timer.periodic(
@@ -30,11 +28,9 @@ class NetworkReachabilityService {
 
   void stopMonitoring() {
     if (!_isMonitoring) {
-      Logger.warning('Monitoring not active');
       return;
     }
 
-    Logger.info('Stopping network monitoring');
     _monitoringTimer?.cancel();
     _monitoringTimer = null;
     _isMonitoring = false;
@@ -55,7 +51,6 @@ class NetworkReachabilityService {
   }
 
   void dispose() {
-    Logger.info('Disposing NetworkReachabilityService');
     stopMonitoring();
     _controller.close();
   }

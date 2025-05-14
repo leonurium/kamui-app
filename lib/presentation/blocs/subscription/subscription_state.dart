@@ -29,4 +29,6 @@ class PurchaseError extends SubscriptionState {
   final String message;
   
   PurchaseError(this.message);
-} 
+}
+
+class PurchaseInProgress extends SubscriptionState {} 

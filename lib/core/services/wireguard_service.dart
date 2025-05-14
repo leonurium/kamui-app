@@ -19,23 +19,19 @@ class WireGuardService {
   bool _isInitialized = false;
 
   WireGuardService._internal() {
-    Logger.info('WireGuardService singleton instance created with hash: ${hashCode}');
     _prefs = di.sl<SharedPreferences>();
   }
 
   Future<bool> initialize() async {
     if (_isInitialized) {
-      Logger.info('WireGuardService already initialized');
       return true;
     }
 
     int retryCount = 0;
     while (retryCount < _maxRetries) {
       try {
-        Logger.info('Initializing WireGuard VPN... (Attempt ${retryCount + 1})');
         await _wireguard.initialize(interfaceName: "wg0");
         _isInitialized = true;
-        Logger.info('WireGuard VPN initialized successfully');
         return true;
       } catch (e) {
         retryCount++;
@@ -85,10 +81,7 @@ class WireGuardService {
       // Save session data to SharedPreferences
       final sessionJson = jsonEncode(connectionData.toJson());
       await _prefs.setString('current_connection_data', sessionJson);
-      Logger.info('Current Connection data saved to SharedPreferences');
-
       String config = _buildWireGuardConfig(connectionData);
-      Logger.info('Starting WireGuard VPN with config: $config');
       
       await _wireguard.startVpn(
         serverAddress: connectionData.session.endpoint,
@@ -96,7 +89,6 @@ class WireGuardService {
         providerBundleIdentifier: Constants.vpnProviderBundleId,
       );
       
-      Logger.info('WireGuard VPN started successfully');
     } catch (e) {
       Logger.error('WireGuard connection error: $e');
       Logger.error('Error type: ${e.runtimeType}');
@@ -120,7 +112,6 @@ class WireGuardService {
         await _wireguard.stopVpn();
         await _prefs.remove('current_connection_data');
         _isInitialized = false;
-        Logger.info('WireGuard VPN stopped successfully');
       }
     } catch (e) {
       Logger.error('WireGuard disconnection error: $e');
@@ -133,11 +124,9 @@ class WireGuardService {
   Future<bool> isConnected() async {
     try {
       if (!_isInitialized) {
-        Logger.info('WireGuard not initialized, returning false for isConnected');
         return false;
       }
       final isConnected = await _wireguard.isConnected();
-      Logger.info('WireGuard connection status: $isConnected');
       return isConnected;
     } catch (e) {
       Logger.error('Error checking WireGuard connection status: $e');

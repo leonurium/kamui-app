@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kamui_app/core/utils/logger.dart';
 import 'package:kamui_app/domain/entities/connection_data.dart';
 import 'package:kamui_app/core/config/constants.dart';
+import 'package:kamui_app/core/services/wireguard_service.dart';
 
 abstract class TimerEvent {}
 
@@ -45,6 +45,8 @@ class TimerStopped extends TimerState {}
 
 class TimerBloc extends Bloc<TimerEvent, TimerState> {
   Timer? _timer;
+  final WireGuardService _wireguardService = WireGuardService();
+
   TimerBloc() : super(TimerInitial()) {
     on<StartTimerEvent>(_onStartTimer);
     on<StopTimerEvent>(_onStopTimer);
@@ -68,8 +70,17 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
 
     // Start periodic timer
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      Logger.info('Timer tick event ${timer.tick}');
-      add(TimerTickEvent());
+      // Check VPN connection status on each tick
+      _wireguardService.isConnected().then((isConnected) {
+        if (!isConnected) {
+          _timer?.cancel();
+          _timer = null;
+          // Instead of emitting directly, add a new event
+          add(StopTimerEvent());
+          return;
+        }
+        add(TimerTickEvent());
+      });
     });
   }
 

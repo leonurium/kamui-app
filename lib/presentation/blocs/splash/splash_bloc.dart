@@ -55,6 +55,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
       _retryCount = 0;
 
       // Save device data safely
+      // deviceData.isPremium = true; // force isPremium status
       await prefs.setString('device_data', jsonEncode(deviceData.toJson()));
 
       // Get and save ads
@@ -127,7 +128,6 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     _retryCount++;
     
     if (_retryCount >= _maxRetries) {
-      Logger.error('Max retries reached for device registration');
       emit(SplashError('Failed to register device after ${_maxRetries} attempts'));
       return;
     }
@@ -137,12 +137,9 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
       await _wireguardService.initialize();
       final isConnected = await _wireguardService.isConnected();
       if (isConnected) {
-        Logger.info('VPN is connected, attempting to disconnect before retry');
         await _wireguardService.disconnect();
-        Logger.info('VPN disconnected successfully, retrying registration');
       } else {
         emit(SplashTimeoutError('Connection timeout. Please check your internet connection and try again.'));
-        Logger.info('VPN is not connected, proceeding with retry');
       }
 
       // Add a small delay before retrying
