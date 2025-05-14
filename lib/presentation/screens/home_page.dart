@@ -25,6 +25,7 @@ import 'package:kamui_app/presentation/blocs/ads/ads_bloc.dart';
 import 'package:kamui_app/presentation/blocs/server_list/server_list_bloc.dart' as server_list;
 import 'package:kamui_app/injection.dart' as di;
 import 'package:kamui_app/presentation/blocs/timer/timer_bloc.dart' as timer;
+import 'package:kamui_app/presentation/widgets/connection_description_widget.dart';
 
 import '../widgets/server_list_widget.dart';
 
@@ -452,11 +453,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             ),
                             SizedBox(height: 20),
                             Center(
-                              child: Text(
-                                ConnectionStateUtils.getConnectionDescription(_currentStage),
-                                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                                  color: Theme.of(context).textTheme.bodyLarge!.color
-                                ),
+                              child: ConnectionDescriptionWidget(
+                                currentStage: _currentStage,
                               ),
                             ),
                             SizedBox(height: 20),

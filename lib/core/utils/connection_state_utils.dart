@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:wireguard_flutter/wireguard_flutter.dart';
 
+class ConnectionDescription {
+  final String prefix;
+  final String status;
+
+  const ConnectionDescription(this.prefix, this.status);
+}
+
 class ConnectionStateUtils {
   static String getConnectionState(VpnStage? state) {
     switch (state) {
@@ -31,14 +38,14 @@ class ConnectionStateUtils {
     }
   }
 
-  static String getConnectionDescription(VpnStage? state) {
+  static ConnectionDescription getConnectionDescription(VpnStage? state) {
     switch (state) {
       case VpnStage.connected:
-        return 'Your Internet is private';
+        return const ConnectionDescription('Your Internet is ', 'private');
       case VpnStage.disconnected:
-        return 'Your Internet is not private';
+        return const ConnectionDescription('Your Internet is ', 'not private');
       default:
-        return '';
+        return const ConnectionDescription('', '');
     }
   }
 
