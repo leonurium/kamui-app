@@ -130,7 +130,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Future<void> _initWireguard() async {
     try {
       await _wireguardService.initialize();
-      _vpnStateSubscription = WireGuardFlutter.instance.vpnStageSnapshot.listen(
+      _vpnStateSubscription = _wireguardService.vpnStageSnapshot.listen(
         (stage) {
           if (mounted) {
             setState(() {

@@ -40,8 +40,30 @@ class WireGuardService {
 
   Future<bool> checkVpnPermission() async {
     try {
-      await initialize();
-      return true;
+      // Initialize first to ensure we have the VPN service ready
+      if (!_isInitialized) {
+        await initialize();
+      }
+
+      // Try to start a test VPN connection to trigger permission request
+      try {
+        await _wireguard.startVpn(
+          serverAddress: "127.0.0.1",
+          wgQuickConfig: "[Interface]\nPrivateKey = test\nAddress = 10.0.0.1/24\n[Peer]\nPublicKey = test\nAllowedIPs = 0.0.0.0/0",
+          providerBundleIdentifier: Constants.vpnProviderBundleId,
+        );
+        // If we get here, permissions were granted
+        await _wireguard.stopVpn();
+        return true;
+      } catch (e) {
+        if (e.toString().contains('Permissions are not given')) {
+          Logger.error('VPN permissions not granted');
+          return false;
+        }
+        // If we get any other error, it means permissions were granted but the test connection failed
+        // which is expected since we used dummy config
+        return true;
+      }
     } catch (e) {
       Logger.error('Error checking VPN permission: $e');
       Logger.error('Error type: ${e.runtimeType}');
@@ -102,11 +124,8 @@ class WireGuardService {
 
   Future<bool> isConnected() async {
     try {
-      final stage = await _wireguard.vpnStageSnapshot.first;
-      final isStageConnected = stage == VpnStage.connected;
       final isConnected = await _wireguard.isConnected();
-
-      return isStageConnected ? isStageConnected : isConnected;
+      return isConnected;
     } catch (e) {
       Logger.error('Error checking WireGuard connection status: $e');
       Logger.error('Error type: ${e.runtimeType}');
