@@ -92,16 +92,6 @@ class NetworkBloc extends Bloc<NetworkEvent, NetworkState> {
       }
     } catch (e) {
       Logger.error('Failed to handle VPN disconnection: $e');
-      await _attemptForceDisconnect(emit);
-    }
-  }
-
-  Future<void> _attemptForceDisconnect(Emitter<NetworkState> emit) async {
-    try {
-      await _wireguardService.disconnect();
-      emit(NetworkDisconnected());
-    } catch (e) {
-      Logger.error('Force disconnect failed: $e');
     }
   }
 

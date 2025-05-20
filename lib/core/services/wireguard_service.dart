@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wireguard_flutter/wireguard_flutter.dart';
 import 'package:kamui_app/core/utils/logger.dart';
@@ -11,14 +10,14 @@ import 'package:kamui_app/core/config/constants.dart';
 class WireGuardService {
   static final WireGuardService _instance = WireGuardService._internal();
   factory WireGuardService() => _instance;
-  
-  final WireGuardFlutterInterface _wireguard = WireGuardFlutter.instance;
+  late final WireGuardFlutterInterface _wireguard;
+  late final Stream<VpnStage> vpnStageSnapshot;
   late SharedPreferences _prefs;
-  static const int _maxRetries = 3;
-  static const Duration _retryDelay = Duration(seconds: 2);
   bool _isInitialized = false;
 
   WireGuardService._internal() {
+    _wireguard = WireGuardFlutter.instance;
+    vpnStageSnapshot = _wireguard.vpnStageSnapshot;
     _prefs = di.sl<SharedPreferences>();
   }
 
@@ -27,42 +26,22 @@ class WireGuardService {
       return true;
     }
 
-    int retryCount = 0;
-    while (retryCount < _maxRetries) {
-      try {
-        await _wireguard.initialize(interfaceName: "wg0");
-        _isInitialized = true;
-        return true;
-      } catch (e) {
-        retryCount++;
-        Logger.error('Failed to initialize WireGuard VPN: $e');
-        Logger.error('Error type: ${e.runtimeType}');
-        
-        if (retryCount < _maxRetries) {
-          Logger.info('Retrying initialization in ${_retryDelay.inSeconds} seconds...');
-          await Future.delayed(_retryDelay);
-        } else {
-          Logger.error('Max retries reached. Giving up initialization.');
-          _isInitialized = false;
-          return false;
-        }
-      }
+    try {
+      await _wireguard.initialize(interfaceName: "wg0");
+      _isInitialized = true;
+      return true;
+    } catch (e) {
+      Logger.error('Failed to initialize WireGuard VPN: $e');
+      Logger.error('Error type: ${e.runtimeType}');
+      _isInitialized = false;
+      return false;
     }
-    return false;
   }
 
   Future<bool> checkVpnPermission() async {
     try {
-      if (Platform.isIOS) {
-        // On iOS, we need to check if the VPN profile is already installed
-        if (!_isInitialized) {
-          await initialize();
-        }
-        return true;
-      } else {
-        await initialize();
-        return true;
-      }
+      await initialize();
+      return true;
     } catch (e) {
       Logger.error('Error checking VPN permission: $e');
       Logger.error('Error type: ${e.runtimeType}');
@@ -80,7 +59,6 @@ class WireGuardService {
 
       // Save session data to SharedPreferences
       final sessionJson = jsonEncode(connectionData.toJson());
-      await _prefs.setString('current_connection_data', sessionJson);
       String config = _buildWireGuardConfig(connectionData);
       
       await _wireguard.startVpn(
@@ -88,6 +66,7 @@ class WireGuardService {
         wgQuickConfig: config,
         providerBundleIdentifier: Constants.vpnProviderBundleId,
       );
+      await _prefs.setString('current_connection_data', sessionJson);
       
     } catch (e) {
       Logger.error('WireGuard connection error: $e');
@@ -123,11 +102,11 @@ class WireGuardService {
 
   Future<bool> isConnected() async {
     try {
-      if (!_isInitialized) {
-        return false;
-      }
+      final stage = await _wireguard.vpnStageSnapshot.first;
+      final isStageConnected = stage == VpnStage.connected;
       final isConnected = await _wireguard.isConnected();
-      return isConnected;
+
+      return isStageConnected ? isStageConnected : isConnected;
     } catch (e) {
       Logger.error('Error checking WireGuard connection status: $e');
       Logger.error('Error type: ${e.runtimeType}');
