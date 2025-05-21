@@ -130,11 +130,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Future<void> _initWireguard() async {
     try {
       await _wireguardService.initialize();
+      _vpnStateSubscription?.cancel(); // Cancel any existing subscription
       _vpnStateSubscription = _wireguardService.vpnStageSnapshot.listen(
         (stage) {
+          if (Constants.networkLogger) {
+            Logger.info("VPN Stage Changed in HomePage: $stage");
+          }
           if (mounted) {
             setState(() {
               _currentStage = stage;
+              // If we're connected, ensure we have the connection data
+              if (stage == VpnStage.connected && currentConnectionData == null) {
+                final currentState = widget.vpnBloc.state;
+                if (currentState is vpn.VpnConnected) {
+                  currentConnectionData = currentState.connectionData;
+                }
+              }
             });
           }
         },
@@ -187,7 +198,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   Future<void> _checkWireguardStatus() async {
     try {
-      final isConnected = await WireGuardFlutter.instance.isConnected();
+      final isConnected = await _wireguardService.isConnected();
       if (mounted) {
         setState(() {
           _currentStage = isConnected ? VpnStage.connected : VpnStage.disconnected;
@@ -285,14 +296,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     setState(() {
       _showingAds = false;
     });
-    
+
     if (!mounted) return;
 
     // Check if bloc is closed
     if (widget.vpnBloc.isClosed) {
       return;
     }
-    
+
     final isConnected = await _wireguardService.isConnected();
 
     if (!isConnected) {

@@ -149,7 +149,9 @@ class WireGuardService {
     if (connectionData.pool.presharedKey.trim().isNotEmpty) {
       config += '\nPresharedKey = ${connectionData.pool.presharedKey}';
     }
-
+    if (Constants.networkLogger) {
+      Logger.info("[WireGuard config]: $config");
+    }
     return config;
   }
 } 

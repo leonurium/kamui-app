@@ -86,7 +86,7 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
       );
     } catch (e) {
       emit(VpnError(e.toString()));
-      
+
       // Track connection failure
       await AnalyticsService.logAppCrash(
         error: e.toString(),
