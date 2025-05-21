@@ -3,7 +3,8 @@ name: Firebase App Distribution
 on:
   push:
     tags:
-      - 'v*'
+      - 'dev-*'  # For Firebase distribution
+      - 'v*'     # For Play Store distribution
 
 env:
   SECRET_KEY: ${{ secrets.SECRET_KEY }}
@@ -21,8 +22,12 @@ jobs:
       
       - name: Validate version format
         run: |
-          if [[ ! ${{ github.ref_name }} =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Error: Tag must follow semantic versioning format (vX.Y.Z)"
+          if [[ ${{ github.ref_name }} =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "PLAY_STORE=true" >> $GITHUB_ENV
+          elif [[ ${{ github.ref_name }} =~ ^dev-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "PLAY_STORE=false" >> $GITHUB_ENV
+          else
+            echo "Error: Tag must follow format vX.Y.Z (for Play Store) or dev-X.Y.Z (for Firebase)"
             exit 1
           fi
 
@@ -73,6 +78,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
       
       - name: Build Android APK
+        if: env.PLAY_STORE == 'false'
         run: |
           flutter build apk --debug
           if [ $? -ne 0 ]; then
@@ -82,7 +88,12 @@ jobs:
             exit 1
           fi
       
+      - name: Build Android App Bundle
+        if: env.PLAY_STORE == 'true'
+        run: flutter build appbundle --release
+      
       - name: Firebase App Distribution - Android
+        if: env.PLAY_STORE == 'false'
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
@@ -90,3 +101,12 @@ jobs:
           file: build/app/outputs/flutter-apk/app-debug.apk
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           releaseNotes: ${{ env.RELEASE_NOTES }}
+      
+      - name: Upload to Google Play
+        if: env.PLAY_STORE == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          packageName: com.gamavpn.app
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: alpha
