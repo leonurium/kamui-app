@@ -66,6 +66,19 @@ jobs:
       
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > key.jks
+
+      - name: Setup signing configuration
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          # Create key.properties file
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEYSTORE_ALIAS }}" >> android/key.properties
+          echo "storeFile=../../key.jks" >> android/key.properties
       
       - name: Generate release notes
         id: release_notes
