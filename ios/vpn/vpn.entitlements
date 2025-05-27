@@ -13,7 +13,7 @@
 	</array>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.gamavpn.app</string>
+		<string>group.com.gamavpn.ios</string>
 	</array>
 </dict>
 </plist>
