@@ -6,23 +6,123 @@ import 'package:kamui_app/presentation/blocs/subscription/subscription_state.dar
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:kamui_app/domain/usecases/purchase_package_usecase.dart';
 import 'package:get_it/get_it.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:kamui_app/core/config/constants.dart';
 
-class SubscriptionPage extends StatelessWidget {
+class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
+
+  @override
+  State<SubscriptionPage> createState() => _SubscriptionPageState();
+}
+
+class _SubscriptionPageState extends State<SubscriptionPage> with SingleTickerProviderStateMixin {
+  late AnimationController _restoreButtonController;
+  late Animation<double> _restoreButtonAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreButtonController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _restoreButtonAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(
+        parent: _restoreButtonController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _restoreButtonController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _showRestoreConfirmationDialog(SubscriptionBloc subscriptionBloc) async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.restore, color: Theme.of(context).colorScheme.primary),
+              SizedBox(width: 8),
+              Text('Restore Purchases'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'This will restore your previous subscription if you have one.',
+                style: TextStyle(fontSize: 16),
+              ),
+              SizedBox(height: 16),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'If you\'ve purchased on another device, make sure you\'re signed in with the same account.',
+                        style: TextStyle(fontSize: 14, color: Colors.blue[700]),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                subscriptionBloc.add(RestorePurchasesEvent());
+              },
+              icon: Icon(Icons.restore),
+              label: Text('Restore Now'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final Color primaryColor = const Color(0xFF1A3055);
     final Color accentColor = const Color(0xFF7C4DFF);
-    return FutureBuilder<PackageInfo>(
-      future: PackageInfo.fromPlatform(),
-      builder: (context, snapshot) {
-        final appName = snapshot.data?.appName ?? '';
-        return BlocProvider(
-          create: (context) => SubscriptionBloc(
-            purchasePackageUseCase: GetIt.I<PurchasePackageUseCase>(),
-          )..add(LoadProductsEvent()),
-          child: BlocListener<SubscriptionBloc, SubscriptionState>(
+    return BlocProvider(
+      create: (context) => SubscriptionBloc(
+        purchasePackageUseCase: GetIt.I<PurchasePackageUseCase>(),
+      )..add(LoadProductsEvent()),
+      child: FutureBuilder<PackageInfo>(
+        future: PackageInfo.fromPlatform(),
+        builder: (context, snapshot) {
+          final appName = snapshot.data?.appName ?? '';
+          return BlocListener<SubscriptionBloc, SubscriptionState>(
             listener: (context, state) async {
               if (state is PurchaseSuccess) {
                 // Show dialog first
@@ -58,6 +158,105 @@ class SubscriptionPage extends StatelessWidget {
                 );
                 // Reload products after error
                 context.read<SubscriptionBloc>().add(LoadProductsEvent());
+              } else if (state is RestoreSuccess) {
+                await showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    title: Row(
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.green),
+                        SizedBox(width: 8),
+                        Text('Restore Successful!'),
+                      ],
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Your previous subscription has been restored successfully.'),
+                        SizedBox(height: 16),
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.verified_user, color: Colors.green),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'You now have access to all premium features.',
+                                  style: TextStyle(color: Colors.green[700]),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pop(true);
+                        },
+                        child: Text('Continue'),
+                      ),
+                    ],
+                  ),
+                );
+              } else if (state is RestoreError) {
+                await showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    title: Row(
+                      children: [
+                        Icon(Icons.error_outline, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Restore Failed'),
+                      ],
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(state.message),
+                        SizedBox(height: 16),
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline, color: Colors.red),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Make sure you\'re signed in with the same account you used for the original purchase.',
+                                  style: TextStyle(color: Colors.red[700]),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text('Try Again'),
+                      ),
+                    ],
+                  ),
+                );
               }
             },
             child: Scaffold(
@@ -78,14 +277,18 @@ class SubscriptionPage extends StatelessWidget {
                   onPressed: () => Navigator.pop(context),
                 ),
                 actions: [
-                  TextButton.icon(
-                    onPressed: () {
-                      context.read<SubscriptionBloc>().add(RestorePurchasesEvent());
-                    },
-                    icon: Icon(Icons.restore, color: Colors.white),
-                    label: Text('Restore', style: TextStyle(color: Colors.white)),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
+                  ScaleTransition(
+                    scale: _restoreButtonAnimation,
+                    child: TextButton.icon(
+                      onPressed: () {
+                        final subscriptionBloc = context.read<SubscriptionBloc>();
+                        _showRestoreConfirmationDialog(subscriptionBloc);
+                      },
+                      icon: Icon(Icons.restore, color: Colors.white),
+                      label: Text('Restore', style: TextStyle(color: Colors.white)),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -150,10 +353,48 @@ class SubscriptionPage extends StatelessWidget {
                                     ),
                                     SizedBox(height: 4),
                                     Text(
-                                      "Enjoy secure, private, and unrestricted internet access. If you've previously purchased a premium package, you can restore your latest purchase by tapping the 'Restore' button in the top right corner.",
+                                      "Enjoy secure, private, and unrestricted internet access.",
                                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                             color: Colors.white70,
                                           ),
+                                    ),
+                                    SizedBox(height: 16),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.history, color: accentColor, size: 20),
+                                        SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            "Already purchased?",
+                                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 8),
+                                    Container(
+                                      padding: EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.restore, color: accentColor, size: 20),
+                                          SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              "Tap the Restore button above to recover your previous subscription",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    color: Colors.white70,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -179,7 +420,12 @@ class SubscriptionPage extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                                 child: Center(
                                   child: TextButton(
-                                    onPressed: () {},
+                                    onPressed: () async {
+                                      final Uri url = Uri.parse(Constants.faqUrl);
+                                      if (await canLaunchUrl(url)) {
+                                        await launchUrl(url);
+                                      }
+                                    },
                                     child: Text('FAQ', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
                                   ),
                                 ),
@@ -229,9 +475,9 @@ class SubscriptionPage extends StatelessWidget {
                 },
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

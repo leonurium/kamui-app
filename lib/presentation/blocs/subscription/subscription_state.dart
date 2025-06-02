@@ -31,4 +31,12 @@ class PurchaseError extends SubscriptionState {
   PurchaseError(this.message);
 }
 
-class PurchaseInProgress extends SubscriptionState {} 
+class PurchaseInProgress extends SubscriptionState {}
+
+class RestoreSuccess extends SubscriptionState {}
+
+class RestoreError extends SubscriptionState {
+  final String message;
+  
+  RestoreError(this.message);
+} 
