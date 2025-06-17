@@ -85,6 +85,15 @@ jobs:
         run: |
           git fetch --prune --unshallow || true
           COMMITS=$(git log --pretty=format:"- %s" -n 5)
+          
+          # Create whatsnew directory for Google Play Store
+          mkdir -p distribution/whatsnew
+          echo "Release ${{ github.ref_name }}" > distribution/whatsnew/whatsnew-en-US
+          echo "" >> distribution/whatsnew/whatsnew-en-US
+          echo "Recent changes:" >> distribution/whatsnew/whatsnew-en-US
+          echo "$COMMITS" >> distribution/whatsnew/whatsnew-en-US
+          
+          # Generate release notes for Firebase
           echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
           echo "Release ${{ github.ref_name }}" >> $GITHUB_ENV
           echo "" >> $GITHUB_ENV
@@ -125,3 +134,4 @@ jobs:
           packageName: com.gamavpn.app
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           track: alpha
+          whatsNewDirectory: distribution/whatsnew
