@@ -94,7 +94,7 @@ jobs:
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $GROQ_API_KEY" \
             -d '{
-              "model": "llama3-70b-8192",
+              "model": "llama-3.3-70b-versatile",
               "messages": [
                 {"role": "system", "content": "You are a helpful assistant that writes friendly, non-technical app release notes."},
                 {"role": "user", "content": "'"$PROMPT"'"}
