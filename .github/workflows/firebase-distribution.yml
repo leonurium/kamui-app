@@ -80,27 +80,37 @@ jobs:
           echo "keyAlias=${{ secrets.KEYSTORE_ALIAS }}" >> android/key.properties
           echo "storeFile=../../key.jks" >> android/key.properties
       
-      - name: Generate release notes
-        id: release_notes
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Generate humanized release notes with Groq
+        id: ai_release_notes
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          git fetch --prune --unshallow || true
           COMMITS=$(git log --pretty=format:"- %s" -n 5)
-          
-          # Create whatsnew directory for Google Play Store
-          mkdir -p distribution/whatsnew
-          echo "Release ${{ github.ref_name }}" > distribution/whatsnew/whatsnew-en-US
-          echo "" >> distribution/whatsnew/whatsnew-en-US
-          echo "Recent changes:" >> distribution/whatsnew/whatsnew-en-US
-          echo "$COMMITS" >> distribution/whatsnew/whatsnew-en-US
-          
-          # Generate release notes for Firebase
-          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
-          echo "Release ${{ github.ref_name }}" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "Recent changes:" >> $GITHUB_ENV
-          echo "$COMMITS" >> $GITHUB_ENV
+          PROMPT="Please rephrase the following release notes to be more understandable and friendly for non-technical users, like an app update in the Play Store or App Store. Focus on clarity and benefits, not technical details. Here are the changes:\n$COMMITS"
+          RESPONSE=$(curl -s https://api.groq.com/openai/v1/chat/completions \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $GROQ_API_KEY" \
+            -d '{
+              "model": "llama3-70b-8192",
+              "messages": [
+                {"role": "system", "content": "You are a helpful assistant that writes friendly, non-technical app release notes."},
+                {"role": "user", "content": "'"$PROMPT"'"}
+              ],
+              "max_tokens": 300
+            }')
+          AI_NOTES=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
+          echo "AI_RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "$AI_NOTES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-      
+
+      - name: Write AI release notes to Play Store file
+        run: |
+          mkdir -p distribution/whatsnew
+          echo "${{ env.AI_RELEASE_NOTES }}" > distribution/whatsnew/whatsnew-en-US
+
       - name: Build Android APK
         if: startsWith(github.ref, 'refs/tags/dev-')
         run: |
@@ -124,7 +134,7 @@ jobs:
           groups: qa-testers
           file: build/app/outputs/flutter-apk/app-debug.apk
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          releaseNotes: ${{ env.RELEASE_NOTES }}
+          releaseNotes: ${{ env.AI_RELEASE_NOTES }}
       
       - name: Upload to Google Play
         if: startsWith(github.ref, 'refs/tags/v')
