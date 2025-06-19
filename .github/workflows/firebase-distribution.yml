@@ -151,3 +151,28 @@ jobs:
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           track: alpha
           whatsNewDirectory: distribution/whatsnew
+
+      - name: Send email to testers
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: dawidd6/action-send-mail@v6
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "New App Release Available for Testing"
+          body: |
+            Hi Testers,
+
+            A new version of the app is available for testing on the Play Store.
+            Please check the Play Store testing link.
+            https://play.google.com/apps/testing/com.gamavpn.app
+
+            Release notes:
+            ${{ env.AI_RELEASE_NOTES }}
+
+            Best regards,
+            Your Handsome Developer :3
+          to: ${{ secrets.MAIL_RECIPIENTS }}
+          from: "Gama VPN <noreply@gama-vpn.com>"
