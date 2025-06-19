@@ -109,7 +109,9 @@ jobs:
       - name: Write AI release notes to Play Store file
         run: |
           mkdir -p distribution/whatsnew
-          echo "${{ env.AI_RELEASE_NOTES }}" > distribution/whatsnew/whatsnew-en-US
+          cat <<EOF > distribution/whatsnew/whatsnew-en-US
+          ${{ env.AI_RELEASE_NOTES }}
+          EOF
 
       - name: Build Android APK
         if: startsWith(github.ref, 'refs/tags/dev-')
