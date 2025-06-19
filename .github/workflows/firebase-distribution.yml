@@ -89,7 +89,7 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           COMMITS=$(git log --pretty=format:"- %s" -n 5)
-          PROMPT="You are helping to write release notes for a VPN app. Please rephrase the following release notes to be more understandable and friendly for non-technical users, like an app update in the Play Store or App Store. Focus on clarity and benefits, not technical details. Here are the changes:\n$COMMITS"
+          PROMPT="You are helping to write release notes for a VPN app. Only generate the release notes themselves. Please rephrase the following release notes to be more understandable and friendly for non-technical users, like an app update in the Play Store or App Store. Focus on clarity and benefits, not technical details. Here are the changes:\n$COMMITS"
           RESPONSE=$(curl -s https://api.groq.com/openai/v1/chat/completions \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $GROQ_API_KEY" \
