@@ -93,17 +93,14 @@ jobs:
           RESPONSE=$(curl -s https://api.groq.com/openai/v1/chat/completions \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $GROQ_API_KEY" \
-            -d @- <<EOF
-            {
+            -d '{
               "model": "llama3-70b-8192",
               "messages": [
                 {"role": "system", "content": "You are a helpful assistant that writes friendly, non-technical app release notes."},
-                {"role": "user", "content": "$PROMPT"}
+                {"role": "user", "content": "'"$PROMPT"'"}
               ],
               "max_tokens": 300
-            }
-            EOF
-          )
+            }')
           AI_NOTES=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
           if [ -z "$AI_NOTES" ] || [ "$AI_NOTES" = "null" ]; then
             echo "AI response was null or empty. Full response: $RESPONSE"
