@@ -165,7 +165,7 @@ jobs:
           body: |
             Hi Testers,
 
-            A new version of the app is available for testing on the Play Store.
+            A new version of Gama VPN (version: ${{ github.ref_name }}) is available for testing on the Play Store.
             Please check the Play Store testing link.
             https://play.google.com/apps/testing/com.gamavpn.app
 

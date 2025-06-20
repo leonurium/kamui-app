@@ -6,6 +6,7 @@ import '../models/main_response.dart';
 import '../../domain/entities/package.dart';
 import '../../domain/entities/payment_history.dart';
 import 'premium_repository_mock.dart';
+import 'package:kamui_app/core/services/analytics_service.dart';
 
 class PremiumRepositoryImpl implements PremiumRepository {
   final ApiClient _apiClient;
@@ -23,8 +24,25 @@ class PremiumRepositoryImpl implements PremiumRepository {
         (data) => (data as List).map((e) => Package.fromJson(e)).toList(),
       );
       
+      await AnalyticsService.logFeatureUsage(
+        featureName: 'getPackages',
+        action: 'api_response',
+        additionalParams: {
+          'success': mainResponse.success,
+          'message': mainResponse.message ?? '',
+          'error': mainResponse.error ?? '',
+        },
+      );
+      
       return mainResponse.data?.cast<Package>() ?? [];
     } on DioException catch (e) {
+      await AnalyticsService.logFeatureUsage(
+        featureName: 'getPackages',
+        action: 'api_error',
+        additionalParams: {
+          'error': e.message ?? '',
+        },
+      );
       // If server is down or timeout, use mock data
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
@@ -49,8 +67,24 @@ class PremiumRepositoryImpl implements PremiumRepository {
       );
       
       final mainResponse = MainResponse.fromJson(response.data, null);
+      await AnalyticsService.logFeatureUsage(
+        featureName: 'purchasePackage',
+        action: 'api_response',
+        additionalParams: {
+          'success': mainResponse.success,
+          'message': mainResponse.message ?? '',
+          'error': mainResponse.error ?? '',
+        },
+      );
       return mainResponse.success;
     } on DioException catch (e) {
+      await AnalyticsService.logFeatureUsage(
+        featureName: 'purchasePackage',
+        action: 'api_error',
+        additionalParams: {
+          'error': e.message ?? '',
+        },
+      );
       // If server is down or timeout, use mock data
       if (Constants.isUseMockData) {
         if (e.type == DioExceptionType.connectionTimeout ||
@@ -74,8 +108,25 @@ class PremiumRepositoryImpl implements PremiumRepository {
         (data) => (data as List).map((e) => PaymentHistory.fromJson(e)).toList(),
       );
       
+      await AnalyticsService.logFeatureUsage(
+        featureName: 'getPaymentHistories',
+        action: 'api_response',
+        additionalParams: {
+          'success': mainResponse.success,
+          'message': mainResponse.message ?? '',
+          'error': mainResponse.error ?? '',
+        },
+      );
+      
       return mainResponse.data?.cast<PaymentHistory>() ?? [];
     } on DioException catch (e) {
+      await AnalyticsService.logFeatureUsage(
+        featureName: 'getPaymentHistories',
+        action: 'api_error',
+        additionalParams: {
+          'error': e.message ?? '',
+        },
+      );
       // If server is down or timeout, use mock data
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
