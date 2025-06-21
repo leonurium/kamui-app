@@ -218,16 +218,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         });
         
         // Show status update to user
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              isConnected ? 'VPN is connected' : 'VPN is disconnected',
-              style: TextStyle(color: Colors.white),
-            ),
-            backgroundColor: isConnected ? Colors.green : Colors.red,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        // 21 Juni 2025 hide at all snackbar
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     content: Text(
+        //       isConnected ? 'VPN is connected' : 'VPN is disconnected',
+        //       style: TextStyle(color: Colors.white),
+        //     ),
+        //     backgroundColor: isConnected ? Colors.green : Colors.red,
+        //     duration: Duration(seconds: 2),
+        //   ),
+        // );
       }
     } catch (e) {
       if (mounted) {

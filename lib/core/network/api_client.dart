@@ -4,6 +4,7 @@ import '../utils/signature.dart';
 import '../config/constants.dart';
 import '../utils/device_info.dart';
 import '../utils/logger.dart';
+import '../utils/curl_generator.dart';
 
 class ApiClient {
   late Dio _dio;
@@ -33,6 +34,11 @@ class ApiClient {
           options.headers['Content-Type'] = 'application/json';
 
           if (Constants.networkLogger) {
+            // Generate and log curl command
+            final curlCommand = CurlGenerator.generateReadableCurlCommand(options);
+            Logger.debug("[CURL COMMAND]");
+            Logger.info(curlCommand);
+            
             Logger.debug("[REQUEST] ${options.uri}");
             Logger.debug("[HEADERS]:");
             for (var header in options.headers.entries) {
