@@ -310,7 +310,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     if (!isConnected) {
       if (server != null) {
         _showLoadingSnackBar('Connecting to VPN...');
-        widget.vpnBloc.add(vpn.ConnectVpnEvent(server!.id));
+        widget.vpnBloc.add(vpn.ConnectVpnEvent(server!));
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Please select a server first')),

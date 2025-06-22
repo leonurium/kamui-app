@@ -62,7 +62,7 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
   ) async {
     emit(VpnConnecting());
     try {
-      final connectionData = await _connectVpnUseCase.execute(event.serverId);
+      final connectionData = await _connectVpnUseCase.execute(event.server);
       _connectionStartTime = DateTime.now();
       _currentServerLocation = connectionData.session.poolName; // Using poolName as server location
       _currentProtocol = 'WireGuard'; // Assuming WireGuard protocol

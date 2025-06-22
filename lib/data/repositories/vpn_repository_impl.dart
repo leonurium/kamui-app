@@ -58,14 +58,18 @@ class VpnRepositoryImpl implements VpnRepository {
   }
 
   @override
-  Future<ConnectionData> connect(int serverId) async {
+  Future<ConnectionData> connect(Server server) async {
     try {
-      final deviceId = await DeviceInfoUtil.getDeviceId();      
-      final response = await _apiClient.dio.post(
+      final deviceId = await DeviceInfoUtil.getDeviceId();
+      
+      // Create a dynamic Dio instance with the server's apiUrl
+      final dynamicDio = _apiClient.createDynamicDio(server.apiUrl);
+      
+      final response = await dynamicDio.post(
         '/api/vpn/connect',
         data: {
           'device_id': deviceId,
-          'server_id': serverId,
+          'server_id': server.id,
         },
       );
             
@@ -81,6 +85,7 @@ class VpnRepositoryImpl implements VpnRepository {
           'success': mainResponse.success,
           'message': mainResponse.message ?? '',
           'error': mainResponse.error ?? '',
+          'server_api_url': server.apiUrl,
         },
       );
       
@@ -95,6 +100,7 @@ class VpnRepositoryImpl implements VpnRepository {
         action: 'api_error',
         additionalParams: {
           'error': e.message ?? '',
+          'server_api_url': server.apiUrl,
         },
       );
       // If server is down or timeout, use mock data
@@ -102,7 +108,7 @@ class VpnRepositoryImpl implements VpnRepository {
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout ||
           e.type == DioExceptionType.connectionError) {
-        return _mockRepository.connect(serverId);
+        return _mockRepository.connect(server);
       }
       throw Exception('Failed to connect: ${e.message}');
     }

@@ -63,7 +63,7 @@ class VpnRepositoryMock implements VpnRepository {
   }
 
   @override
-  Future<ConnectionData> connect(int serverId) async {
+  Future<ConnectionData> connect(Server server) async {
     // Simulate network delay
     await Future.delayed(Duration(seconds: 2));
     
@@ -74,7 +74,7 @@ class VpnRepositoryMock implements VpnRepository {
       pool: Pool(
         id: 5,
         name: 'utun00',
-        serverId: serverId,
+        serverId: server.id,
         publicKey: 'mock-public-key',
         endpoint: '13.212.59.212',
         persistentKeepalive: 25,
@@ -88,7 +88,7 @@ class VpnRepositoryMock implements VpnRepository {
         id: 0,
         sessionId: 'mock-session-${now.millisecondsSinceEpoch}',
         userId: 10,
-        serverId: serverId,
+        serverId: server.id,
         poolId: 5,
         poolName: 'utun00',
         privateKey: 'mock-private-key',

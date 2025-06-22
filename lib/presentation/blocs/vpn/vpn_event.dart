@@ -10,12 +10,12 @@ abstract class VpnEvent extends Equatable {
 class LoadServersEvent extends VpnEvent {}
 
 class ConnectVpnEvent extends VpnEvent {
-  final int serverId;
+  final Server server;
 
-  const ConnectVpnEvent(this.serverId);
+  const ConnectVpnEvent(this.server);
 
   @override
-  List<Object> get props => [serverId];
+  List<Object> get props => [server];
 }
 
 class DisconnectVpnEvent extends VpnEvent {
