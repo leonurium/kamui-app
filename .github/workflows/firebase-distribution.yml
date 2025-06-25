@@ -90,6 +90,8 @@ jobs:
         run: |
           COMMITS=$(git log --pretty=format:"- %s" -n 5)
           PROMPT="You are ReleaseNotesGPT, an expert at writing clear, friendly, and concise app release notes for a VPN app. Your task is to take the following list of changes and rewrite them as user-facing release notes for the Play Store or App Store.\n\nGuidelines:\n- Only output the release notes themselves. Do not include any introductions, explanations, or closing statements.\n- Write in a friendly, approachable, and non-technical tone.\n- Focus on the benefits and improvements for the user.\n- Use bullet points if there are multiple items.\n- Do not mention that you are an AI or assistant.\n- Do not include any meta-commentary or instructions.\n- Only output the release notes, nothing else.\n\nHere are the changes:\n$COMMITS"
+          echo "PROMPT being sent to AI:"
+          echo "$PROMPT"
           RESPONSE=$(curl -s https://api.groq.com/openai/v1/chat/completions \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $GROQ_API_KEY" \

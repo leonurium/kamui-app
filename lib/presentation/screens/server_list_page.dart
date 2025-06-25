@@ -96,87 +96,123 @@ class _ServerListPageState extends State<ServerListPage> {
                       )
                     ),
                     SizedBox(height: 20),
-                    ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: state.premiumServers.length,
-                      itemBuilder: (_, index) {
-                        final server = state.premiumServers[index];
-                        final pingResult = state.pingResults[server.id];
-                        return Material(
-                          borderRadius: BorderRadius.circular(10),
+                    if (state.premiumServers.isEmpty)
+                      Container(
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
-                          child: Padding(
-                            padding: const EdgeInsets.all(7.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Wrap(
-                                    crossAxisAlignment: WrapCrossAlignment.center,
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 15,
-                                        backgroundColor: Colors.white,
-                                        child: ClipOval(
-                                          child: Image.network(
-                                            server.flagURL,
-                                            width: 30,
-                                            height: 30,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return Icon(Icons.flag, size: 20, color: Colors.grey);
-                                            },
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.cloud_off,
+                                size: 48,
+                                color: Colors.grey[400],
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'No Premium Servers Available',
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Premium servers are currently unavailable',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey[500],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: state.premiumServers.length,
+                        itemBuilder: (_, index) {
+                          final server = state.premiumServers[index];
+                          final pingResult = state.pingResults[server.id];
+                          return Material(
+                            borderRadius: BorderRadius.circular(10),
+                            color: Theme.of(context).cardColor,
+                            child: Padding(
+                              padding: const EdgeInsets.all(7.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 15,
+                                          backgroundColor: Colors.white,
+                                          child: ClipOval(
+                                            child: Image.network(
+                                              server.flagURL,
+                                              width: 30,
+                                              height: 30,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Icon(Icons.flag, size: 20, color: Colors.grey);
+                                              },
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      SizedBox(width: 15),
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            server.location,
-                                            style: Theme.of(context).textTheme.bodyLarge,
-                                          ),
-                                          if (pingResult != null)
+                                        SizedBox(width: 15),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
                                             Text(
-                                              '${pingResult.mbps.toStringAsFixed(1)} Mbps • ${pingResult.latency}ms',
-                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                color: pingResult.isOnline ? Colors.green : Colors.red,
-                                              ),
+                                              server.location,
+                                              style: Theme.of(context).textTheme.bodyLarge,
                                             ),
-                                        ],
-                                      ),
-                                    ],
+                                            if (pingResult != null)
+                                              Text(
+                                                '${pingResult.mbps.toStringAsFixed(1)} Mbps • ${pingResult.latency}ms',
+                                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                  color: pingResult.isOnline ? Colors.green : Colors.red,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                if (widget.isPremium)
-                                  RoundCheckBox(
-                                    size: 24,
-                                    checkedWidget: const Icon(Icons.check, size: 18, color: Colors.white),
-                                    borderColor: server == state.selectedServer
-                                        ? Theme.of(context).scaffoldBackgroundColor
-                                        : Color.fromARGB(255, 26, 48, 85),
-                                    checkedColor: Color.fromARGB(255, 26, 48, 85),
-                                    isChecked: server == state.selectedServer,
-                                    onTap: (x) {
-                                      widget.bloc.add(SelectServerEvent(server));
-                                      Navigator.of(context).pop(server);
-                                    },
-                                  )
-                                else
-                                  Icon(
-                                    Icons.lock,
-                                    color: Colors.grey,
-                                    size: 24,
-                                  ),
-                              ],
+                                  if (widget.isPremium)
+                                    RoundCheckBox(
+                                      size: 24,
+                                      checkedWidget: const Icon(Icons.check, size: 18, color: Colors.white),
+                                      borderColor: server == state.selectedServer
+                                          ? Theme.of(context).scaffoldBackgroundColor
+                                          : Color.fromARGB(255, 26, 48, 85),
+                                      checkedColor: Color.fromARGB(255, 26, 48, 85),
+                                      isChecked: server == state.selectedServer,
+                                      onTap: (x) {
+                                        widget.bloc.add(SelectServerEvent(server));
+                                        Navigator.of(context).pop(server);
+                                      },
+                                    )
+                                  else
+                                    Icon(
+                                      Icons.lock,
+                                      color: Colors.grey,
+                                      size: 24,
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                      separatorBuilder: (_, index) => SizedBox(height: 10),
-                    ),
+                          );
+                        },
+                        separatorBuilder: (_, index) => SizedBox(height: 10),
+                      ),
                     SizedBox(height: 30),
                     RichText(
                       text: TextSpan(
@@ -191,80 +227,116 @@ class _ServerListPageState extends State<ServerListPage> {
                       )
                     ),
                     SizedBox(height: 20),
-                    ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: state.freeServers.length,
-                      itemBuilder: (_, index) {
-                        final server = state.freeServers[index];
-                        final pingResult = state.pingResults[server.id];
-                        return Material(
-                          borderRadius: BorderRadius.circular(10),
+                    if (state.freeServers.isEmpty)
+                      Container(
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
-                          child: Padding(
-                            padding: const EdgeInsets.all(7.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Wrap(
-                                    crossAxisAlignment: WrapCrossAlignment.center,
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 15,
-                                        backgroundColor: Colors.white,
-                                        child: ClipOval(
-                                          child: Image.network(
-                                            server.flagURL,
-                                            width: 30,
-                                            height: 30,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return Icon(Icons.flag, size: 20, color: Colors.grey);
-                                            },
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.cloud_off,
+                                size: 48,
+                                color: Colors.grey[400],
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'No Free Servers Available',
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Free servers are currently unavailable',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey[500],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: state.freeServers.length,
+                        itemBuilder: (_, index) {
+                          final server = state.freeServers[index];
+                          final pingResult = state.pingResults[server.id];
+                          return Material(
+                            borderRadius: BorderRadius.circular(10),
+                            color: Theme.of(context).cardColor,
+                            child: Padding(
+                              padding: const EdgeInsets.all(7.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 15,
+                                          backgroundColor: Colors.white,
+                                          child: ClipOval(
+                                            child: Image.network(
+                                              server.flagURL,
+                                              width: 30,
+                                              height: 30,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Icon(Icons.flag, size: 20, color: Colors.grey);
+                                              },
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      SizedBox(width: 15),
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            server.location,
-                                            style: Theme.of(context).textTheme.bodyLarge,
-                                          ),
-                                          if (pingResult != null)
+                                        SizedBox(width: 15),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
                                             Text(
-                                              '${pingResult.mbps.toStringAsFixed(1)} Mbps • ${pingResult.latency}ms',
-                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                color: pingResult.isOnline ? Colors.green : Colors.red,
-                                              ),
+                                              server.location,
+                                              style: Theme.of(context).textTheme.bodyLarge,
                                             ),
-                                        ],
-                                      ),
-                                    ],
+                                            if (pingResult != null)
+                                              Text(
+                                                '${pingResult.mbps.toStringAsFixed(1)} Mbps • ${pingResult.latency}ms',
+                                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                  color: pingResult.isOnline ? Colors.green : Colors.red,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                RoundCheckBox(
-                                  size: 24,
-                                  checkedWidget: const Icon(Icons.check, size: 18, color: Colors.white),
-                                  borderColor: server == state.selectedServer
-                                      ? Theme.of(context).scaffoldBackgroundColor
-                                      : Color.fromARGB(255, 26, 48, 85),
-                                  checkedColor: Color.fromARGB(255, 26, 48, 85),
-                                  isChecked: server == state.selectedServer,
-                                  onTap: (x) {
-                                    widget.bloc.add(SelectServerEvent(server));
-                                    Navigator.of(context).pop(server);
-                                  },
-                                ),
-                              ],
+                                  RoundCheckBox(
+                                    size: 24,
+                                    checkedWidget: const Icon(Icons.check, size: 18, color: Colors.white),
+                                    borderColor: server == state.selectedServer
+                                        ? Theme.of(context).scaffoldBackgroundColor
+                                        : Color.fromARGB(255, 26, 48, 85),
+                                    checkedColor: Color.fromARGB(255, 26, 48, 85),
+                                    isChecked: server == state.selectedServer,
+                                    onTap: (x) {
+                                      widget.bloc.add(SelectServerEvent(server));
+                                      Navigator.of(context).pop(server);
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                      separatorBuilder: (_, index) => SizedBox(height: 10),
-                    ),
+                          );
+                        },
+                        separatorBuilder: (_, index) => SizedBox(height: 10),
+                      ),
                   ],
                 ),
               ),
